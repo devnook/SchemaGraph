@@ -94,7 +94,59 @@ plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
 #import rdfextras
 #rdfextras.registerplugins() # if no setuptools
 
+from contextlib import closing
+
+from urllib2 import urlopen
+import html5lib
+import json
+
 class FetchHandler(webapp2.RequestHandler):
+    def get(self):
+      url = self.request.get('url')
+
+      g = rdflib.Graph()
+
+      with closing(urlopen(url)) as f:
+        doc = html5lib.parse(f, treebuilder="dom", encoding=f.info().getparam("charset"))
+        #print doc
+        #print dir(doc)
+        for el in doc.getElementsByTagName("script"):
+          #print dir(el)
+          if el.getAttribute('type') == 'application/ld+json':
+            if el.firstChild:
+              g.parse(data=el.firstChild.data.strip(), format='json-ld')
+
+
+        output = g.serialize(format='json-ld', indent=4)
+        entities = createEntitiesIndex(output)
+        self.response.out.write(json.dumps(entities))
+
+iteritems = lambda mapping: getattr(mapping, 'iteritems', mapping.items)()
+
+def createEntitiesIndex(jsonString):
+  obj = json.loads(jsonString)
+  entities = {}
+  for key, obj, parent in objwalk(obj, ''):
+    #TODO(ewag): validate type.
+    entities[parent['@id']] = parent
+  return entities
+
+
+def objwalk(obj, key, parent=None):
+  if key == "http://schema.org/operation":
+    yield key, obj, parent
+  elif isinstance(obj, dict):
+    for key, value in iteritems(obj):
+      for key, item, parent in objwalk(value, key, obj):
+        yield key, item, parent
+  elif isinstance(obj, list):
+    for index, value in enumerate(obj):
+      for index, item, parent in objwalk(value, index, obj):
+        yield index, item, parent
+
+
+
+class Fetch2Handler(webapp2.RequestHandler):
     def get(self):
       """An example implementation of a Gmail action's handler url.
 
@@ -136,6 +188,10 @@ class FetchHandler(webapp2.RequestHandler):
 
       print(output)
 
+      for stmt in g:
+        print('stmt')
+        print(stmt)
+
       #print g
 
       #for s,p,o in g:
@@ -143,6 +199,7 @@ class FetchHandler(webapp2.RequestHandler):
 
       #print users.create_logout_url('/')
 
+      self.response.out.write(rdflib.util.guess_format(url))
       self.response.out.write(output)
 
 
