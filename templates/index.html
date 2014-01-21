@@ -1,76 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html ng-app>
   <head>
     <title>Test Gmail Schemas</title>
     <link href='//fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="less/css/bootstrap.css">
     <link rel="stylesheet" href="css/codemirror.css">
-    <link rel="stylesheet" href="css/main.css" type="text/css" media="screen" charset="utf-8">
-    <link rel="stylesheet" href="css/validator.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="css/main.css">
   </head>
-  <body>
+  <body controller="mainCtrl">
 
-    <div class="map-appbar">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12">
-            <h1 class="map-appname">Send Gmail Actions email</h1>
-          </div>
-        </div>
-      </div>
-    </div>
+    <style type="text/css">
+    .col-md-4,
+    .col-md-3,
+    .col-md-1 {
+      border: 1px solid #ccc;
+    }
 
-    <div class="container">
-      <div class="row">
-        <div class="col-md-3">
-          <p id="flash"></p>
-        </div>
-        <div class="col-md-9">
-          <p class="pull-right">
-            Logged in as <strong>{{user}}</strong>. Sending email to <strong>{{user}}</strong>.
-            <a href="{{logout_url}}">Log out</a>
-          </p>
-        </div>
-      </div>
+.arrow_box {
+  position: relative;
+  background: #88b7d5;
+}
+.arrow_box:after {
+  right: 100%;
+  top: 50%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+  border-color: rgba(136, 183, 213, 0);
+  border-right-color: #88b7d5;
+  border-width: 20px;
+  margin-top: -20px;
+}
+
+.arrow-box-right {
+  position: relative;
+  background: #88b7d5;
+}
+.arrow-box-right:after {
+  left: 100%;
+  top: 50%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+  border-color: rgba(136, 183, 213, 0);
+  border-left-color: #88b7d5;
+  border-width: 20px;
+  margin-top: -20px;
+}
+
+    </style>
+
+
+    <div style="padding: 0 15px;">
       <div class="row">
         <div class="col-md-12">
-          <form id="content_form">
-            <div><textarea id="code" name="content">Paste email markup here</textarea></div>
-          </form>
+          <h1 class="map-appname">Send Gmail Actions email</h1>
         </div>
       </div>
       <div class="row">
-        <div class="col-md-6">
-          <select id="load-sample" class="button" style="-webkit-user-select: none;">
-            <option value="">Load sample</option>
-            <option value="/examples/oneclick/{{token}}">One-click action (success)</option>
-            <option value="/examples/oneclick-failure/{{token}}">One-click action (failure)</option>
-            <option value="/examples/rate/{{token}}">Rate action</option>
-            <option value="/examples/track/{{token}}">Track action</option>
-            <option value="/examples/goto/{{token}}">Go-to action</option>
-            <option value="/examples/event-card/{{token}}">Event card</option>
-            <option value="/examples/restaurant-card/{{token}}">Restaurant reservation card</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <a id="send-email" class="button button-red pull-right">Send Email</a>
-        </div>
-      </div>
+        <div class="col-md-4">
+          <h2>Provider's website/webapp</h2>
+          <div>
+            <input id="provider-url" type="text" placeholder="resource page url" value="http://localhost:8080/examples/restaurant">
+            <button id="fetch" class="btn btn-primary">crawl</button>
+            <p id="action"></p>
 
-      <div class="row">
-        <div class="col-md-12" id="client-log">
-          <p></p>
-        </div>
-      </div>
 
+          </div>
+          <div>Provider's backend received calls:</div>
+          <div id="provider-log">
+
+          </div>
+
+
+        </div>
+
+        <div class="col-md-4">
+          <h2>Google backend</h2>
+            <p>Google fount these entities on the page:</p>
+            <ul id="entities"></ul>
+            <p>Raw:</p>
+            <p class="alert alert-warning" id="validation-errors"></p>
+           <pre id="log"></pre>
+        </div>
+
+        <!--
+        <div class="col-md-1">
+          <div class="arrow_box">css arrow please!</div>
+          <div class="arrow-box-right">css arrow please!</div>
+        </div> -->
+        <div class="col-md-4">
+          <h2>User's search results</h2>
+          <div>
+            <input id="search-term" type="text" placeholder="search..." value="Place">
+            <button id="search" class="btn btn-primary">search</button>
+          </div>
+          <div id="search-results"></div>
+
+        </div>
+
+
+      </div>
     </div>
 
-    <script>
-      var token = '{{token}}';
-    </script>
+    <div class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Modal title</h4>
+      </div>
+      <div class="modal-body">
+        <p>One fine body&hellip;</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="js/codemirror-compressed.js"></script>
     <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"></script>
+
+      <script type="text/javascript" src="/js/closure/goog/base.js"></script>
+      <script>
+  goog.require("goog.async.Deferred");
+  goog.require("goog.events");
+  goog.require("goog.style");
+  goog.require("goog.dom");
+  goog.require("goog.ui.Dialog");
+  goog.require("goog.ui.PopupMenu");
+  goog.require("goog.ui.MenuItem");
+  goog.require("goog.Uri");
+  </script>
+    <script type="text/javascript" src="/js/yaap2.js"></script>
+    <script type="text/javascript" src="/js/mustache.js"></script>
     <script type="text/javascript" src="/js/main.js"></script>
   </body>
 </html>

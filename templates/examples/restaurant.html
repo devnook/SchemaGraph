@@ -1,0 +1,61 @@
+
+<html>
+
+<head>
+  <script type="text/javascript" src="/js/RDFaProcessor.min.1.2.0.js"></script>
+  <script type="text/javascript" src="/js/RDFa.min.1.2.0.js"></script>
+
+  <script type="application/ld+json">
+{"@context":"http://schema.org", "items": ["@type":"Restaurant","@id":"/examples/restaurant","name":"Sam's Pizza Place","cuisine":"pizzeria","menu":{"@type":"Menu","@context":"http://schema.org","name":"My awesome menu!","menuItem":{"@id":"/restaurants/123/menu/1"}},"orders":{"@type":"ItemList","@id":"/restaurants/123/orders"},"reservations":{"@type":"ItemList","@id":"/restaurants/123/reservations"},"operation":{"@type":"ReviewAction","actionStatus":"proposed","actionHandler":[{"@type":"HttpHandler","name":"Review this restaurant","httpMethod":"post"}]}]}
+  </script>
+
+
+</head>
+
+<body>
+
+
+
+<pre>
+{
+ "@context": "http://schema.org",
+ "@type": "Restaurant",
+ "@id": "/examples/restaurant",
+ "name": "Sam's Pizza Place",
+ "cuisine": "pizzeria",
+ "menu": {
+  "@type": "Menu",
+  "@context": "http://schema.org",
+  "name": "My awesome menu!",
+  "menuItem": {
+   "@id": "/restaurants/123/menu/1"
+  }
+ },
+ "orders": {
+  "@type": "ItemList",
+  "@id": "/restaurants/123/orders"
+ },
+ "reservations": {
+  "@type": "ItemList",
+  "@id": "/restaurants/123/reservations"
+ },
+ "operation": {
+  "@type": "ReviewAction",
+  "actionStatus": "proposed",
+  "actionHandler": [
+   {
+    "@type": "HttpHandler",
+    "name": "Review this restaurant",
+    "httpMethod": "post"
+   }
+  ]
+ }
+}
+</pre>
+
+<script type="text/javascript">
+
+  console.log(document.data.graph)
+</script>
+</body>
+</html>

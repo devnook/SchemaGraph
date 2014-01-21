@@ -21,6 +21,10 @@ import logging
 import datetime
 from time import strftime, gmtime
 
+import urllib2
+
+import rdflib
+
 from google.appengine.api import users
 from google.appengine.api import mail
 from google.appengine.api import channel
@@ -38,7 +42,8 @@ class MainHandler(webapp2.RequestHandler):
     template = jinja_environment.get_template('index.html')
     logout_url = users.create_logout_url('/')
     user = users.get_current_user()
-    token = channel.create_channel(user.user_id())
+    #token = channel.create_channel(user.user_id())
+    token = ''
     self.response.out.write(template.render(user=user.email(),
                                             token=token,
                                             logout_url=logout_url))
@@ -57,63 +62,95 @@ class MainHandler(webapp2.RequestHandler):
 
 
 class SampleHandler(webapp2.RequestHandler):
-  def get(self, sample, token):
+  def get(self, sample):
     """Returns the content of a sample email with embedded structured data.
 
     Args:
       sample: The type of the sample email to return.
-      token: Channel Client token. It is used to construct a callback url for actions.
     """
     google_now_date = self.request.get('googleNowDate')
     template = jinja_environment.get_template(sample + '.html')
-    self.response.out.write(template.render(token=token, google_now_date=google_now_date))
+    self.response.out.write(template.render())
 
+  def post(self, sample):
+    """Returns the content of a sample email with embedded structured data.
 
-class FailureHandler(webapp2.RequestHandler):
-    def get(self, token):
+    Args:
+      sample: The type of the sample email to return.
+    """
+    template = jinja_environment.get_template(sample + '.html')
+    if template:
+      self.response.out.write('success')
+    else:
+      self.error(404)
+      self.response.out.write('failure')
+
+from rdflib import Graph, plugin
+from rdflib.serializer import Serializer
+from rdflib.parser import Parser
+plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
+plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+
+#import rdfextras
+#rdfextras.registerplugins() # if no setuptools
+
+class FetchHandler(webapp2.RequestHandler):
+    def get(self):
       """An example implementation of a Gmail action's handler url.
 
       In this example it is a static url, always returns status 400. It also notifies
       the UI via the channel service that this call was received.
       """
-      msg = ('Server encounter an error! <span class="failure">400 Bad Request</span> ' +
-             '<span class="path">/failure/token</span>')
-      channel.send_message(token, msg)
-      self.error(400)
-      self.response.out.write('failure')
+      url = self.request.get('url')
+      #TODO(ewag): Validate url.
 
 
-class SuccessHandler(webapp2.RequestHandler):
-    def get(self, token):
-      """An example implementation of a Gmail action's handler url.
 
-      In this example it is a static url, always returns status 200. It also notifies
-      the UI via the channel service that this call was received.
+      g=rdflib.Graph()
+      g.load(url, format="rdfa")
+
+      #url = 'http://dbpedia.org/resource/Semantic_Web'
+      #g.load(url, format="microdata")
+
+
+
+      #test_json = g.serialize(format='json-ld', indent=4)
+
+      test_json = """
+      {
+        "@context": {
+          "name": "http://schema.org"
+        },
+        "@id": "Nfc1857e1e24c49ada75934412f0704f5",
+        "@type": [
+            "PostalAddress"
+        ]
+      }
       """
-      msg = ('Received a call! <span class="success">200 OK</span> ' +
-             '<span class="path">/success/token</span>')
-      channel.send_message(token, msg)
-      self.response.out.write('success')
 
-    def post(self, token):
-      """An example implementation of a Gmail action's handler url.
 
-      In this example it is a static url, always returns status 200. It also notifies
-      the UI via the channel service that this call was received.
-      """
-      msg = ('Received a call! <span class="success">200 OK</span> ' +
-             '<span class="path">/success/token</span>')
-      if self.request.POST.items():
-        msg = msg + ' Params: '
-      for param in self.request.POST.items():
-        msg = msg + (' %s=%s' % param)
-      channel.send_message(token, msg)
-      self.response.out.write('success')
+
+      g1 = rdflib.Graph().parse(data=test_json, format='json-ld')
+
+      output = g1.serialize(format='json-ld', indent=4)
+
+      print(output)
+
+      #print g
+
+      #for s,p,o in g:
+      #  print s,p,o
+
+      #print users.create_logout_url('/')
+
+      self.response.out.write(output)
+
+
+
 
 
 app = webapp2.WSGIApplication([
-    webapp2.Route('/success/<token>', handler=SuccessHandler, name='success'),
-    webapp2.Route('/failure/<token>', handler=FailureHandler, name='failure'),
-    webapp2.Route('/examples/<sample>/<token>', handler=SampleHandler, name='sample'),
+    webapp2.Route('/fetch', handler=FetchHandler, name='fetch'),
+    webapp2.Route('/examples/<sample>', handler=SampleHandler, name='sample'),
     ('/', MainHandler),
 ], debug=True)

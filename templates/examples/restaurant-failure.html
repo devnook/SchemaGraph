@@ -1,0 +1,50 @@
+
+<html>
+
+<head>
+
+  <script type="application/ld+json">
+{"@context":"http://schema.org","@type":"Restaurant","@id":"/examples/restaurant-bad-url","name":"Sam's Pizza Place","cuisine":"pizzeria","menu":{"@type":"Menu","@context":"http://schema.org","name":"My awesome menu!","menuItem":{"@id":"/restaurants/123/menu/1"}},"orders":{"@type":"ItemList","@id":"/restaurants/123/orders"},"reservations":{"@type":"ItemList","@id":"/restaurants/123/reservations"},"operation":{"@type":"ReviewAction","actionStatus":"proposed","actionHandler":[{"@type":"HttpHandler","name":"Review this restaurant","httpMethod":"post"}]}}
+  </script>
+
+</head>
+
+<body>
+<pre>
+{
+ "@context": "http://schema.org",
+ "@type": "Restaurant",
+ "@id": "/examples/restaurant-bad-url",
+ "name": "Sam's Pizza Place",
+ "cuisine": "pizzeria",
+ "menu": {
+  "@type": "Menu",
+  "@context": "http://schema.org",
+  "name": "My awesome menu!",
+  "menuItem": {
+   "@id": "/restaurants/123/menu/1"
+  }
+ },
+ "orders": {
+  "@type": "ItemList",
+  "@id": "/restaurants/123/orders"
+ },
+ "reservations": {
+  "@type": "ItemList",
+  "@id": "/restaurants/123/reservations"
+ },
+ "operation": {
+  "@type": "ReviewAction",
+  "actionStatus": "proposed",
+  "actionHandler": [
+   {
+    "@type": "HttpHandler",
+    "name": "Review this restaurant",
+    "httpMethod": "post"
+   }
+  ]
+ }
+}
+</pre>
+</body>
+</html>

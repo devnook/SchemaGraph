@@ -1,4 +1,4 @@
-application: gmail-actions
+application: google.com:actions-sandbox
 version: 1
 runtime: python27
 api_version: 1
@@ -9,16 +9,6 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
-- url: /(.*\.xml)
-  mime_type: application/xml
-  static_files: static/\1
-  upload: static/(.*\.xml)
-
-- url: /samples/(.*\.html)
-  mime_type: text/html
-  static_files: samples/\1
-  upload: samples/(.*\.html)
-
 - url: /images
   static_dir: images
 
@@ -28,13 +18,10 @@ handlers:
 - url: /js
   static_dir: js
 
-- url: /success/.*
-  script: main.app
+- url: /less/css
+  static_dir: less/css
 
-- url: /failure/.*
-  script: main.app
-
-- url: /examples/sample/.*
+- url: /examples/.*
   script: main.app
 
 - url: .*
