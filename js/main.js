@@ -80,43 +80,30 @@ actSbx.Google.findEntitiesWithOperations = function(key, jsonObj, parent) {
 
 actSbx.Google.prototype.crawl = function(url) {
   var G = this;
-  G.url = url;
+
+  //todo: encode
+  var url = location.origin + '/fetch?url=' + url;
+
   $.get(url, function(response) {
-    G.jsonLd = G.parseHtml(response);
-    $('#log').text(JSON.stringify(G.jsonLd));
-    $('#validation-errors').text('Validation errors go here')
+    var responseObj = JSON.parse(response);
+    G.entities = responseObj['entities'];
+    console.log(response)
+    console.log(G.jsonLd)
+    $('#log').text(JSON.stringify(G.entities));
+    $('#validation-errors').text(responseObj['errors'])
 
     // Structured Data entities.
-    G.entities = actSbx.Google.findEntitiesWithOperations('root', G.jsonLd)
-    G.entities = G.jsonLd.mainContentOfPage;
     var el = $('#entities');
-
     if (G.entities) {
-      for (var i = 0, entity; entity = G.entities[i]; i++) {
-
-        if (actSbx.Google.supportedEntityTypes.indexOf(entity['@type']) > -1) {
-          var indexTerms = entity.name.split(' ');
-          for (var j = indexTerms.length - 1; j > -1; j--) {
-            G.index[indexTerms[j]] = entity;
-          }
-
-          var view = entity;
-          var output = Mustache.render("<li><b>{{@type}}</b>: {{name}}</li>", view);
-          el.append($(output))
-        }
-      }
-    }
-
-    if (actSbx.Google.supportedEntityTypes.indexOf(G.jsonLd['@type']) > -1) {
-      var entity = G.jsonLd;
-      var indexTerms = entity.name.split(' ');
-      for (var j = indexTerms.length - 1; j > -1; j--) {
-        G.index[indexTerms[j]] = entity;
-      }
-
-      var view = entity;
-      var output = Mustache.render("<li><b>{{@type}}</b>: {{name}}</li>", view);
-      el.append($(output))
+      $.each(G.entities, function(id, entity) {
+        var view = {
+          name: entity['http://schema.org/name'][0]['@value'],
+          id: entity['@id']
+        };
+        console.log(entity)
+        var output = Mustache.render("<li><b>{{name}}</b> (ID:{{id}})</li>", view);
+        el.append($(output))
+      })
     }
   })
 };

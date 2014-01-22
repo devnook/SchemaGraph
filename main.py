@@ -25,6 +25,8 @@ import urllib2
 
 import rdflib
 
+import parser
+
 from google.appengine.api import users
 from google.appengine.api import mail
 from google.appengine.api import channel
@@ -102,48 +104,13 @@ import json
 
 class FetchHandler(webapp2.RequestHandler):
     def get(self):
+      response = {}
       url = self.request.get('url')
-
-      g = rdflib.Graph()
-
-      with closing(urlopen(url)) as f:
-        doc = html5lib.parse(f, treebuilder="dom", encoding=f.info().getparam("charset"))
-        #print doc
-        #print dir(doc)
-        for el in doc.getElementsByTagName("script"):
-          #print dir(el)
-          if el.getAttribute('type') == 'application/ld+json':
-            if el.firstChild:
-              g.parse(data=el.firstChild.data.strip(), format='json-ld')
-
-
-        output = g.serialize(format='json-ld', indent=4)
-        entities = createEntitiesIndex(output)
-        self.response.out.write(json.dumps(entities))
-
-iteritems = lambda mapping: getattr(mapping, 'iteritems', mapping.items)()
-
-def createEntitiesIndex(jsonString):
-  obj = json.loads(jsonString)
-  entities = {}
-  for key, obj, parent in objwalk(obj, ''):
-    #TODO(ewag): validate type.
-    entities[parent['@id']] = parent
-  return entities
-
-
-def objwalk(obj, key, parent=None):
-  if key == "http://schema.org/operation":
-    yield key, obj, parent
-  elif isinstance(obj, dict):
-    for key, value in iteritems(obj):
-      for key, item, parent in objwalk(value, key, obj):
-        yield key, item, parent
-  elif isinstance(obj, list):
-    for index, value in enumerate(obj):
-      for index, item, parent in objwalk(value, index, obj):
-        yield index, item, parent
-
+      try:
+        response['entities'] = parser.parse_document(url)
+      except Exception as e:
+        response['errors'] = str(e)
+      self.response.out.write(json.dumps(response))
 
 
 class Fetch2Handler(webapp2.RequestHandler):
