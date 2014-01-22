@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html ng-app>
   <head>
-    <title>Test Gmail Schemas</title>
+    <title>Test Actions</title>
     <link href='//fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="less/css/bootstrap.css">
     <link rel="stylesheet" href="css/codemirror.css">
+    <link rel="stylesheet" href="css/prettify.css">
     <link rel="stylesheet" href="css/main.css">
   </head>
   <body controller="mainCtrl">
@@ -60,7 +61,7 @@
     <div style="padding: 0 15px;">
       <div class="row">
         <div class="col-md-12">
-          <h1 class="map-appname">Send Gmail Actions email</h1>
+          <h1 class="map-appname">Test Actions</h1>
         </div>
       </div>
       <div class="row">
@@ -87,7 +88,7 @@
             <ul id="entities"></ul>
             <p>Raw:</p>
             <p class="alert alert-warning" id="validation-errors"></p>
-           <pre id="log"></pre>
+           <pre id="log" class="prettyprint lang-html linenums"></pre>
         </div>
 
         <!--
@@ -144,7 +145,7 @@
   goog.require("goog.ui.MenuItem");
   goog.require("goog.Uri");
   </script>
-    <script type="text/javascript" src="/js/yaap2.js"></script>
+    <script type="text/javascript" src="/js/prettify.js"></script>
     <script type="text/javascript" src="/js/mustache.js"></script>
     <script type="text/javascript" src="/js/main.js"></script>
   </body>

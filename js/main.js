@@ -89,13 +89,18 @@ actSbx.Google.prototype.crawl = function(url) {
     G.entities = responseObj['entities'];
     console.log(response)
     console.log(G.jsonLd)
-    $('#log').text(JSON.stringify(G.entities));
+    $('#log').text(JSON.stringify(G.entities, undefined, 2));
     $('#validation-errors').text(responseObj['errors'])
 
     // Structured Data entities.
     var el = $('#entities');
     if (G.entities) {
       $.each(G.entities, function(id, entity) {
+        console.log(entity)
+        var indexTerms = entity['http://schema.org/name'][0]['@value'].split(' ');
+        for (var j = indexTerms.length - 1; j > -1; j--) {
+          G.index[indexTerms[j]] = entity;
+        }
         var view = {
           name: entity['http://schema.org/name'][0]['@value'],
           id: entity['@id']
