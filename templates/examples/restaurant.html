@@ -8,24 +8,13 @@
   <script type="application/ld+json">
 {"@context":{
   "name":"http://schema.org/name",
-  "operation":"http://schema.org/operation"
-}, "@type":"Restaurant","@id":"/examples/restaurant","name":"Sam's Pizza Place","cuisine":"pizzeria","menu":{"@type":"Menu","@context":"http://schema.org","name":"My awesome menu!","menuItem":{"@id":"/restaurants/123/menu/1"}},"orders":{"@type":"ItemList","@id":"/restaurants/123/orders"},"reservations":{"@type":"ItemList","@id":"/restaurants/123/reservations"},"operation":{"@type":"ReviewAction","actionStatus":"proposed","actionHandler":[{"@type":"HttpHandler","name":"Review this restaurant","httpMethod":"post"}]}}
+  "operation":"http://schema.org/operation",
+  "ReviewAction":"http://schema.org/ReviewAction",
+  "actionStatus":"http://schema.org/actionStatus",
+  "HttpHandler":"http://schema.org/HttpHandler"
+}, "@type":"Restaurant","@id":"/examples/restaurant","name":"Sam's Pizza Place","cuisine":"pizzeria","menu":{"@type":"Menu","@context":"http://schema.org","name":"My awesome menu!","menuItem":{"@id":"/restaurants/123/menu/1"}},"orders":{"@type":"ItemList","@id":"/restaurants/123/orders"},"reservations":{"@type":"ItemList","@id":"/restaurants/123/reservations"},"operation":{"@id": "aaa", "@type":"ReviewAction","actionStatus":"proposed","actionHandler":[{"@type":"HttpHandler","name":"Review this restaurant","httpMethod":"post"}]}}
   </script>
 
-  <script type="application/ld+json">
-{"@context":{"name":"http://schema.org/name"},"@type":"Movie","@id":"/organizations/123/movies/123","name":"Dan's schema.org presentation","operation":[{"@type":"WatchAction","actionStatus":"proposed","actionHandler":[{"@type":"WebPageHandler","name":"Watch Dan's schema.org presentation!","httpMethod":"post"}]}]}
-  </script>
-
-  <script type="application/ld+json">
-{"@context":{
-  "name":"http://schema.org/name",
-  "items":"http://schema.org/ItemList",
-  "operation":"http://schema.org/operation"
-},
-"items": [{"@type":"Movie","@id":"/organizations/123/movies/123","name":"Dan's schema.org presentation","operation":[{"@type":"WatchAction","actionStatus":"proposed","actionHandler":[{"@type":"WebPageHandler","name":"Watch Dan's schema.org presentation!","httpMethod":"post"}]}]},
-{"@type":"Movie","@id":"/organizations/123/movies/1235","name":"aaaDan's schema.org presentation"}
-]}
-  </script>
 
 
 

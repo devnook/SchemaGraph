@@ -33,8 +33,15 @@ def parse_document(url):
       if el.getAttribute('type') == 'application/ld+json':
         if el.firstChild:
           g.parse(data=el.firstChild.data.strip(), format='json-ld')
+
+    for s,p,o in g:
+      print s,p,o
+
     output = g.serialize(format='json-ld', indent=4)
     entities = createEntitiesIndex(output)
+
+    #print entities
+    #print list(g)
     return entities
 
 

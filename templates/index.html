@@ -10,104 +10,63 @@
   </head>
   <body controller="mainCtrl">
 
-    <style type="text/css">
-    .col-md-4,
-    .col-md-3,
-    .col-md-1 {
-      border: 1px solid #ccc;
-    }
-
-.arrow_box {
-  position: relative;
-  background: #88b7d5;
-}
-.arrow_box:after {
-  right: 100%;
-  top: 50%;
-  border: solid transparent;
-  content: " ";
-  height: 0;
-  width: 0;
-  position: absolute;
-  pointer-events: none;
-  border-color: rgba(136, 183, 213, 0);
-  border-right-color: #88b7d5;
-  border-width: 20px;
-  margin-top: -20px;
-}
-
-.arrow-box-right {
-  position: relative;
-  background: #88b7d5;
-}
-.arrow-box-right:after {
-  left: 100%;
-  top: 50%;
-  border: solid transparent;
-  content: " ";
-  height: 0;
-  width: 0;
-  position: absolute;
-  pointer-events: none;
-  border-color: rgba(136, 183, 213, 0);
-  border-left-color: #88b7d5;
-  border-width: 20px;
-  margin-top: -20px;
-}
-
-    </style>
 
 
-    <div style="padding: 0 15px;">
+    <div class="container">
       <div class="row">
         <div class="col-md-12">
           <h1 class="map-appname">Test Actions</h1>
         </div>
       </div>
       <div class="row">
-        <div class="col-md-4">
-          <h2>Provider's website/webapp</h2>
-          <div>
-            <input id="provider-url" type="text" placeholder="resource page url" value="http://localhost:8080/examples/restaurant">
-            <button id="fetch" class="btn btn-primary">crawl</button>
-            <p id="action"></p>
+        <div class="col-md-12">
+          <ul class="nav nav-tabs">
+            <li class="active"><a href="#html-input-tab" data-toggle="tab">HTML</a></li>
+            <li><a href="#url-input-tab" data-toggle="tab">URL</a></li>
+          </ul>
 
-
+          <!-- Tab panes -->
+          <div class="tab-content">
+            <div class="tab-pane active" id="html-input-tab">
+              <textarea rows="4" id="code" placeholder="Paste html here"></textarea>
+              <button id="parse" class="btn btn-primary">Parse</button>
+            </div>
+            <div class="tab-pane" id="url-input-tab">
+              <input id="provider-url" type="text" placeholder="resource page url" value="http://localhost:8080/examples/restaurant">
+              <button id="fetch" class="btn btn-primary">crawl</button>
+            </div>
           </div>
-          <div>Provider's backend received calls:</div>
+
+
           <div id="provider-log">
 
           </div>
-
-
         </div>
+      </div>
 
-        <div class="col-md-4">
-          <h2>Google backend</h2>
-            <p>Google fount these entities on the page:</p>
-            <ul id="entities"></ul>
-            <p>Raw:</p>
-            <p class="alert alert-warning" id="validation-errors"></p>
-           <pre id="log" class="prettyprint lang-html linenums"></pre>
-        </div>
+      <div class="row">
 
-        <!--
-        <div class="col-md-1">
-          <div class="arrow_box">css arrow please!</div>
-          <div class="arrow-box-right">css arrow please!</div>
-        </div> -->
-        <div class="col-md-4">
-          <h2>User's search results</h2>
-          <div>
-            <input id="search-term" type="text" placeholder="search..." value="Place">
-            <button id="search" class="btn btn-primary">search</button>
+
+        <div class="col-md-12">
+          <p>Content fetched as Google bot</p>
+          <p class="alert alert-warning" id="validation-errors">aaa</p>
+          <a class="collapsed" data-toggle="collapse" data-target="#raw">
+            Raw
+          </a>
+
+          <div id="raw" class="collapse">
+            <pre id="log" class="prettyprint lang-html linenums"></pre>
           </div>
-          <div id="search-results"></div>
+
+          <ul id="entities"></ul>
 
         </div>
-
 
       </div>
+
+
+
+
     </div>
 
     <div class="modal fade">
@@ -145,6 +104,7 @@
   goog.require("goog.ui.MenuItem");
   goog.require("goog.Uri");
   </script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/js/prettify.js"></script>
     <script type="text/javascript" src="/js/mustache.js"></script>
     <script type="text/javascript" src="/js/main.js"></script>

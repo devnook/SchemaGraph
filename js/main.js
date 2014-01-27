@@ -16,6 +16,27 @@ $(document).ready(function(){
     google.crawl(url);
   });
 
+    // Set up email content editor.
+  var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+    mode: {name: "htmlmixed"},
+    tabMode: "indent",
+    lineNumbers: true
+  });
+  editor.setValue('Paste html markup here')
+  editor.on('focus', function() {
+    if (editor.getValue() === 'Paste html markup here') {
+        editor.setValue('');
+    }
+  });
+  editor.on('blur', function() {
+      if (editor.getValue() === '') {
+          editor.setValue('Paste html markup here');
+      }
+  });
+
+
+
+
 
 });
 
@@ -78,6 +99,11 @@ actSbx.Google.findEntitiesWithOperations = function(key, jsonObj, parent) {
 
 
 
+actSbx.Google.snippetTpl = '<div><a href="{{id}}">{{name}}</a>' +
+  '<p>Sample snippet here bla bla bkla</p>'
+  '<p><span class="action-widget"></span></p>';
+
+
 actSbx.Google.prototype.crawl = function(url) {
   var G = this;
 
@@ -86,9 +112,9 @@ actSbx.Google.prototype.crawl = function(url) {
 
   $.get(url, function(response) {
     var responseObj = JSON.parse(response);
-    G.entities = responseObj['entities'];
     console.log(response)
-    console.log(G.jsonLd)
+    G.entities = responseObj['entities'];
+
     $('#log').text(JSON.stringify(G.entities, undefined, 2));
     $('#validation-errors').text(responseObj['errors'])
 
@@ -106,8 +132,18 @@ actSbx.Google.prototype.crawl = function(url) {
           id: entity['@id']
         };
         console.log(entity)
-        var output = Mustache.render("<li><b>{{name}}</b> (ID:{{id}})</li>", view);
+        var output = Mustache.render(actSbx.Google.snippetTpl, view);
         el.append($(output))
+
+        var rateAction = new actSbx.RateActionWidget(entity['http://schema.org/operation'], 'http://localhost:8080' + entity['@id']);
+      rateAction.render($('#search-results .action-widget'));
+
+      rateAction.eventEmitter.on('action-call', function(e, status, url, data) {
+        $('#provider-log').append($('<p><span class="status ' + status + '">' + status + '</span> ' + url + ' <span class="params">' + data + '</span></p>'));
+      });
+
+
+
       })
     }
   })
