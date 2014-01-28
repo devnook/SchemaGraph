@@ -106,8 +106,9 @@ class FetchHandler(webapp2.RequestHandler):
     def get(self):
       response = {}
       url = self.request.get('url')
+      print url
       try:
-        response['entities'] = parser.parse_document(url)
+        response['entities'], response['entities_with_operations'] = parser.parse_document(url)
       except Exception as e:
         response['errors'] = str(e)
       self.response.out.write(json.dumps(response))

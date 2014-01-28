@@ -100,7 +100,7 @@ actSbx.Google.findEntitiesWithOperations = function(key, jsonObj, parent) {
 
 
 actSbx.Google.snippetTpl = '<div><a href="{{id}}">{{name}}</a>' +
-  '<p>Sample snippet here bla bla bkla</p>'
+  '<p>Sample snippet here bla bla bkla</p>' +
   '<p><span class="action-widget"></span></p>';
 
 
@@ -120,27 +120,31 @@ actSbx.Google.prototype.crawl = function(url) {
 
     // Structured Data entities.
     var el = $('#entities');
-    if (G.entities) {
-      $.each(G.entities, function(id, entity) {
-        console.log(entity)
-        var indexTerms = entity['http://schema.org/name'][0]['@value'].split(' ');
-        for (var j = indexTerms.length - 1; j > -1; j--) {
-          G.index[indexTerms[j]] = entity;
-        }
+
+    console.log(responseObj['entities_with_operations'])
+    if (responseObj['entities_with_operations']) {
+      $.each(responseObj['entities_with_operations'], function(id, entityId) {
+        entity = G.entities[entityId]
+
+
         var view = {
-          name: entity['http://schema.org/name'][0]['@value'],
+          name: entity.name,
           id: entity['@id']
         };
         console.log(entity)
         var output = Mustache.render(actSbx.Google.snippetTpl, view);
         el.append($(output))
 
-        var rateAction = new actSbx.RateActionWidget(entity['http://schema.org/operation'], 'http://localhost:8080' + entity['@id']);
-      rateAction.render($('#search-results .action-widget'));
+        var operation = G.entities[entity.operation['@id']]
+        var handler = G.entities[operation.actionHandler['@id']]
+        console.log(operation)
 
-      rateAction.eventEmitter.on('action-call', function(e, status, url, data) {
-        $('#provider-log').append($('<p><span class="status ' + status + '">' + status + '</span> ' + url + ' <span class="params">' + data + '</span></p>'));
-      });
+        var rateAction = new actSbx.RateActionWidget(entity, operation, handler);
+        rateAction.render($('.action-widget'));
+
+        rateAction.eventEmitter.on('action-call', function(e, status, url, data) {
+          $('#provider-log').append($('<p><span class="status ' + status + '">' + status + '</span> ' + url + ' <span class="params">' + data + '</span></p>'));
+        });
 
 
 
@@ -150,45 +154,7 @@ actSbx.Google.prototype.crawl = function(url) {
 };
 
 
-actSbx.Google.prototype.search = function(term) {
-  var entity = this.index[term];
-  if (entity) {
-    console.log(this.index[term]);
 
-    // This probably would happen somewhere else.
-    // Do we usually expect a page here? or json feed?
-    var G = this;
-
-      console.log(entity)
-      var view = {
-        url: this.url,
-        entity: entity,
-        entityString: JSON.stringify(entity)
-      };
-
-      var output = Mustache.render('<div><a href="{{url}}">{{url}}</a><p>{{entity.@type}}: {{entity.name}} <span class="action-widget"></span></p>', view);
-      $('#search-results').html(output);
-
-      console.log(G.url)
-      console.log(rateAction)
-      // !!!!!!!!!!!!!!
-      var rateAction = new actSbx.RateActionWidget(entity.operation, 'http://localhost:8080' + entity['@id']);
-      rateAction.render($('#search-results .action-widget'));
-
-      rateAction.eventEmitter.on('action-call', function(e, status, url, data) {
-        $('#provider-log').append($('<p><span class="status ' + status + '">' + status + '</span> ' + url + ' <span class="params">' + data + '</span></p>'));
-      });
-
-
-      $('#search-results test').html(output);
-
-
-
-
-
-  }
-
-};
 
 actSbx.ActionWidget = function(url, method) {
   this.url = url;
@@ -196,10 +162,13 @@ actSbx.ActionWidget = function(url, method) {
   this.eventEmitter = $('<span></span>');
 };
 
-actSbx.RateActionWidget = function(operation, url) {
-  actSbx.ActionWidget.call(this, url, operation.actionHandler[0].httpMethod);
+actSbx.RateActionWidget = function(entity, operation, handler) {
+  console.log(handler)
+
+  actSbx.ActionWidget.call(this, entity['@id'], handler.httpMethod);
 
   this.operation_ = operation;
+  this.handler_ = handler;
   this.button_ = null;
 };
 
@@ -208,13 +177,15 @@ actSbx.RateActionWidget.prototype = new actSbx.ActionWidget();
 actSbx.RateActionWidget.prototype.render = function(parent) {
   this.button_ = $('<button class="action-link">Rate</button>');
   parent.append(this.button_);
+  this.log_ = $('<p class="log"></p>');
+  parent.append(this.log_);
   var self = this;
   this.button_.on('click', $.proxy(this.popup, this));
 };
 
 actSbx.RateActionWidget.prototype.popup = function() {
   // Seems there might be multiple action handlers.
-  this.popup_ = $('<div class="popup"><p>' + this.operation_.actionHandler[0].name  +
+  this.popup_ = $('<div class="popup"><p>' + this.handler_.name  +
     '</p><p><select><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></p><p><a href="#" class="btn cancel">cancel</a></p></div>');
   $('body').append(this.popup_);
   var self = this;
@@ -236,8 +207,13 @@ actSbx.RateActionWidget.prototype.popup = function() {
           self.button_.addClass('btn-danger');
         }
         var msg = e.status + ' ' + e.statusText + ': ' + this.url;
-        console.log(e)
-        self.eventEmitter.trigger('action-call', [e.status + ' ' + e.statusText, this.url, this.data])
+        console.log(this)
+        //self.eventEmitter.trigger('action-call', [e.status + ' ' + e.statusText, this.url, this.data])
+        self.log_.append($('<p><span class="status ' + e.status + '">' +
+            e.status + ' ' + e.statusText + '</span> ' + this.url +
+            ' <span class="params">' + this.data + '</span></p>' +
+            '<p>Debug: curl --data-urlencode "' + this.data + '" ' + this.url + '</p>'));
+        self.popup_.remove();
       }
     }
     // What is the name of the param?
