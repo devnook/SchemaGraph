@@ -18,19 +18,15 @@ import jinja2
 import os
 import webapp2
 import logging
-import datetime
-from time import strftime, gmtime
 
-import urllib2
-
-import rdflib
 
 import parser
 
 from google.appengine.api import users
-from google.appengine.api import mail
-from google.appengine.api import channel
 
+
+import json
+import robotparser
 
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(['templates', 'templates/examples']),
@@ -49,19 +45,6 @@ class MainHandler(webapp2.RequestHandler):
     self.response.out.write(template.render(user=user.email(),
                                             token=token,
                                             logout_url=logout_url))
-
-  def post(self):
-    """Sends email with embedded structured data."""
-    email = users.get_current_user().email()
-    if not mail.is_email_valid(email):
-      self.response.out.write('Invalid email.')
-    else:
-      subject = "Testing Gmail Actions " + datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
-      content = self.request.get('content')
-      body = content
-      mail.send_mail(email, email, subject, body='', html=body)
-      self.response.out.write('The email was sent.')
-
 
 class SampleHandler(webapp2.RequestHandler):
   def get(self, sample):
@@ -87,110 +70,33 @@ class SampleHandler(webapp2.RequestHandler):
       self.error(404)
       self.response.out.write('failure')
 
-from rdflib import Graph, plugin
-from rdflib.serializer import Serializer
-from rdflib.parser import Parser
-plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
-plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
-
-#import rdfextras
-#rdfextras.registerplugins() # if no setuptools
-
-from contextlib import closing
-
-from urllib2 import urlopen
-import html5lib
-import json
-
-import robotparser
-from urlparse import urlparse
 
 class FetchHandler(webapp2.RequestHandler):
     def get(self):
       response = {}
       url = self.request.get('url')
-
-      print url
-
       rp = robotparser.RobotFileParser()
-
       # TODO(ewag): find right url!
       rp.set_url("http://www.google.com/robots.txt")
       rp.read()
       if not rp.can_fetch('Googlebot', url):
         response['errors'].append('Content not crawlable. Check robots.txt file for crawl permission.')
 
-      response['entities'], response['entities_with_operations'], response['warnings'], response['errors'] = parser.parse_document(url)
+      (response['entities'],
+       response['entities_with_operations'],
+       response['warnings'],
+       response['errors']) = parser.parse_document(url)
 
       self.response.out.write(json.dumps(response))
 
 class ParseHandler(webapp2.RequestHandler):
     def post(self):
-
       response = {}
-      response['entities'], response['entities_with_operations'], response['warnings'], response['errors'] = parser.parse_string(self.request.body)
-
+      (response['entities'],
+       response['entities_with_operations'],
+       response['warnings'],
+       response['errors']) = parser.parse_string(self.request.body)
       self.response.out.write(json.dumps(response))
-
-
-class Fetch2Handler(webapp2.RequestHandler):
-    def get(self):
-      """An example implementation of a Gmail action's handler url.
-
-      In this example it is a static url, always returns status 400. It also notifies
-      the UI via the channel service that this call was received.
-      """
-      url = self.request.get('url')
-      #TODO(ewag): Validate url.
-
-
-
-      g=rdflib.Graph()
-      g.load(url, format="rdfa")
-
-      #url = 'http://dbpedia.org/resource/Semantic_Web'
-      #g.load(url, format="microdata")
-
-
-
-      #test_json = g.serialize(format='json-ld', indent=4)
-
-      test_json = """
-      {
-        "@context": {
-          "name": "http://schema.org"
-        },
-        "@id": "Nfc1857e1e24c49ada75934412f0704f5",
-        "@type": [
-            "PostalAddress"
-        ]
-      }
-      """
-
-
-
-      g1 = rdflib.Graph().parse(data=test_json, format='json-ld')
-
-      output = g1.serialize(format='json-ld', indent=4)
-
-      print(output)
-
-      for stmt in g:
-        print('stmt')
-        print(stmt)
-
-      #print g
-
-      #for s,p,o in g:
-      #  print s,p,o
-
-      #print users.create_logout_url('/')
-
-      self.response.out.write(rdflib.util.guess_format(url))
-      self.response.out.write(output)
-
-
-
 
 
 app = webapp2.WSGIApplication([
