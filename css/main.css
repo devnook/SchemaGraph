@@ -27,7 +27,67 @@
   font-weight: bold;
 }
 
-#provider-url {
-    width: 300px;
+
+
+.popup {
+  z-index: 10;
 }
 
+a[data-toggle="collapse"]:before {
+  content: "-";
+  width: 10px;
+  display: inline-block;
+}
+a[data-toggle="collapse"].collapsed:before {
+  content: "+";
+}
+a[data-toggle="collapse"]:hover {
+  text-decoration: none;
+}
+a[data-toggle="collapse"] {
+  color: #666;
+}
+
+
+body {
+  background-color: #eee;
+}
+
+.nav-pills {
+  margin: 10px 0;
+}
+
+.nav-pills li.active a:hover {
+  background-color: #fff;
+  color: #DD4B39;
+}
+
+.nav-pills li a {
+  padding: 5px 10px;
+  margin-right: 5px;
+  color: #999;
+}
+
+.nav-pills li.active a {
+  background-color: #fff;
+  color: #DD4B39;
+
+}
+
+textarea {
+  border: none;
+  outline: none;
+  display: block;
+  width: 100%;
+  height: 150px;
+}
+
+.btn {
+  margin: 10px 0;
+}
+
+.entity {
+  background-color: #fff;
+  margin: 10px 0;
+  padding: 10px;
+}

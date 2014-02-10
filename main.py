@@ -102,15 +102,34 @@ from urllib2 import urlopen
 import html5lib
 import json
 
+import robotparser
+from urlparse import urlparse
+
 class FetchHandler(webapp2.RequestHandler):
     def get(self):
       response = {}
       url = self.request.get('url')
+
       print url
-      try:
-        response['entities'], response['entities_with_operations'] = parser.parse_document(url)
-      except Exception as e:
-        response['errors'] = str(e)
+
+      rp = robotparser.RobotFileParser()
+
+      # TODO(ewag): find right url!
+      rp.set_url("http://www.google.com/robots.txt")
+      rp.read()
+      if not rp.can_fetch('Googlebot', url):
+        response['errors'].append('Content not crawlable. Check robots.txt file for crawl permission.')
+
+      response['entities'], response['entities_with_operations'], response['warnings'], response['errors'] = parser.parse_document(url)
+
+      self.response.out.write(json.dumps(response))
+
+class ParseHandler(webapp2.RequestHandler):
+    def post(self):
+
+      response = {}
+      response['entities'], response['entities_with_operations'], response['warnings'], response['errors'] = parser.parse_string(self.request.body)
+
       self.response.out.write(json.dumps(response))
 
 
@@ -176,6 +195,7 @@ class Fetch2Handler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/fetch', handler=FetchHandler, name='fetch'),
+    webapp2.Route('/parse', handler=ParseHandler, name='parse'),
     webapp2.Route('/examples/<sample>', handler=SampleHandler, name='sample'),
     ('/', MainHandler),
 ], debug=True)

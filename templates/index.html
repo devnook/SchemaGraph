@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/codemirror.css">
     <link rel="stylesheet" href="css/prettify.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="http://voice-io.appspot.com/css/twilight.css">
   </head>
   <body controller="mainCtrl">
 
@@ -20,7 +21,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <ul class="nav nav-tabs">
+          <ul class="nav nav-pills">
             <li class="active"><a href="#html-input-tab" data-toggle="tab">HTML</a></li>
             <li><a href="#url-input-tab" data-toggle="tab">URL</a></li>
           </ul>
@@ -32,7 +33,7 @@
               <button id="parse" class="btn btn-primary">Parse</button>
             </div>
             <div class="tab-pane" id="url-input-tab">
-              <input id="provider-url" type="text" placeholder="resource page url" value="http://localhost:8080/examples/restaurant">
+              <textarea rows="4" id="provider-url" placeholder="Resource page url">http://localhost:8080/examples/restaurant</textarea>
               <button id="fetch" class="btn btn-primary">crawl</button>
             </div>
           </div>
@@ -44,21 +45,20 @@
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" id="raw-results">
 
 
         <div class="col-md-12">
-          <p>Content fetched as Google bot</p>
-          <p class="alert alert-warning" id="validation-errors">aaa</p>
+          <p class="alert alert-warning" id="validation-errors"></p>
           <a class="collapsed" data-toggle="collapse" data-target="#raw">
-            Raw
+            Recognized entity graph
           </a>
 
           <div id="raw" class="collapse">
             <pre id="log" class="prettyprint lang-html linenums"></pre>
           </div>
 
-          <ul id="entities"></ul>
+          <div id="entities"><div>
 
         </div>
 

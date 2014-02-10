@@ -5,8 +5,17 @@
 $(document).ready(function(){
   var google = new actSbx.Google();
 
-  $('#search').click(function() {
-    google.search($('#search-term').val())
+  $('#raw-results').hide();
+
+  $('#parse').click(function() {
+    var url = location.origin + '/parse';
+
+    var data = editor.getValue();
+
+    $.post(url, data, function(response) {
+      console.log(response);
+      google.processResponse(response);
+    });
   });
 
 
@@ -19,20 +28,11 @@ $(document).ready(function(){
     // Set up email content editor.
   var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
     mode: {name: "htmlmixed"},
-    tabMode: "indent",
-    lineNumbers: true
+    tabMode: "indent"
   });
-  editor.setValue('Paste html markup here')
-  editor.on('focus', function() {
-    if (editor.getValue() === 'Paste html markup here') {
-        editor.setValue('');
-    }
-  });
-  editor.on('blur', function() {
-      if (editor.getValue() === '') {
-          editor.setValue('Paste html markup here');
-      }
-  });
+  editor.setValue('<script type="application/ld+json">\n  ...\n</script>')
+  editor.setSize('100%', '150px')
+
 
 
 
@@ -99,7 +99,7 @@ actSbx.Google.findEntitiesWithOperations = function(key, jsonObj, parent) {
 
 
 
-actSbx.Google.snippetTpl = '<div><a href="{{id}}">{{name}}</a>' +
+actSbx.Google.snippetTpl = '<div class="entity"><a href="{{id}}">{{name}}</a>' +
   '<p>Sample snippet here bla bla bkla</p>' +
   '<p><span class="action-widget"></span></p>';
 
@@ -111,47 +111,54 @@ actSbx.Google.prototype.crawl = function(url) {
   var url = location.origin + '/fetch?url=' + url;
 
   $.get(url, function(response) {
-    var responseObj = JSON.parse(response);
-    console.log(response)
-    G.entities = responseObj['entities'];
+    G.processResponse(response);
 
-    $('#log').text(JSON.stringify(G.entities, undefined, 2));
-    $('#validation-errors').text(responseObj['errors'])
-
-    // Structured Data entities.
-    var el = $('#entities');
-
-    console.log(responseObj['entities_with_operations'])
-    if (responseObj['entities_with_operations']) {
-      $.each(responseObj['entities_with_operations'], function(id, entityId) {
-        entity = G.entities[entityId]
-
-
-        var view = {
-          name: entity.name,
-          id: entity['@id']
-        };
-        console.log(entity)
-        var output = Mustache.render(actSbx.Google.snippetTpl, view);
-        el.append($(output))
-
-        var operation = G.entities[entity.operation['@id']]
-        var handler = G.entities[operation.actionHandler['@id']]
-        console.log(operation)
-
-        var rateAction = new actSbx.RateActionWidget(entity, operation, handler);
-        rateAction.render($('.action-widget'));
-
-        rateAction.eventEmitter.on('action-call', function(e, status, url, data) {
-          $('#provider-log').append($('<p><span class="status ' + status + '">' + status + '</span> ' + url + ' <span class="params">' + data + '</span></p>'));
-        });
-
-
-
-      })
-    }
   })
 };
+
+actSbx.Google.prototype.processResponse = function(response) {
+  var responseObj = JSON.parse(response);
+  this.entities = responseObj['entities'];
+  $('#raw-results').show();
+  $('#log').text(JSON.stringify(this.entities, undefined, 2));
+  $('#validation-errors').text(responseObj['errors'])
+  $('#entities').html('');
+  this.displayEntities(responseObj['entities_with_operations'])
+};
+
+actSbx.Google.prototype.displayEntities = function(entityIds) {
+  var el = $('#entities');
+  var G = this;
+  if (entityIds) {
+    $.each(entityIds, function(id, entityId) {
+      entity = G.entities[entityId]
+      G.renderSnippet(el, entity);
+    })
+  }
+
+};
+
+actSbx.Google.prototype.renderSnippet = function(el, entity) {
+  var G = this;
+  var view = {
+    name: entity.name,
+    id: entity['@id']
+  };
+  console.log(entity)
+  var output = Mustache.render(actSbx.Google.snippetTpl, view);
+  el.append($(output))
+
+  var operation = G.entities[entity.operation['@id']]
+  var handler = G.entities[operation.actionHandler['@id']]
+  console.log(operation)
+
+  var rateAction = new actSbx.RateActionWidget(entity, operation, handler);
+  rateAction.render($('.action-widget'));
+
+  rateAction.eventEmitter.on('action-call', function(e, status, url, data) {
+    $('#provider-log').append($('<p><span class="status ' + status + '">' + status + '</span> ' + url + ' <span class="params">' + data + '</span></p>'));
+  });
+}
 
 
 

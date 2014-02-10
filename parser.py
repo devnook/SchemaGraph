@@ -1,6 +1,8 @@
 
 import rdflib
 
+import validator
+
 from rdflib import Graph, plugin
 from rdflib.serializer import Serializer
 from rdflib.parser import Parser
@@ -28,32 +30,57 @@ import pdb
 #import urllib.robotparser
 
 def parse_document(url):
-  g = rdflib.Graph()
-
-  #print urllib.robotparser.can_fetch('Googlebot', url)
-  print 'ha'
-  test = urllib.robotparser.can_fetch('Googlebot', url)
-  print test
-
-  if test:
-    print 'yes'
-  else:
-    print 'no'
-
   document = urlopen(url)
-  print document
+
+  print url
+
+
 
   with closing(document) as f:
-
-
     doc = html5lib.parse(f, treebuilder="dom",
                          encoding=f.info().getparam("charset"))
-    for el in doc.getElementsByTagName("script"):
-      if el.getAttribute('type') == 'application/ld+json':
-        if el.firstChild:
-          #print el.firstChild.data.strip()
-          g.parse(data=el.firstChild.data.strip(), location=url, format='json-ld')
+    g, parse_errors = process_dom(doc, url)
 
+    entities, entities_with_operations, warnings, errors = process_graph(g)
+
+
+    return entities, entities_with_operations, warnings, errors + parse_errors
+
+def parse_string(docString):
+  doc = html5lib.parse(docString, treebuilder="dom")
+  g, parse_errors = process_dom(doc, None)
+
+  entities, entities_with_operations, warnings, errors = process_graph(g)
+
+
+  return entities, entities_with_operations, warnings, errors + parse_errors
+
+
+def process_dom(doc, location):
+  g = rdflib.Graph()
+  errors = []
+
+  for el in doc.getElementsByTagName("script"):
+    if el.getAttribute('type') == 'application/ld+json':
+      if el.firstChild:
+        #print el.firstChild.data.strip()
+        try:
+          g.parse(data=el.firstChild.data.strip(), location=location, format='json-ld')
+        except ValueError as e:
+          # log here
+          errors.append(str(e))
+
+  return g, errors
+
+
+def process_graph(g):
+
+  warnings, errors = validator.validate(g)
+
+  if errors:
+    entities_by_id = []
+    entities_with_operations = []
+  else:
 
     entities_with_operations = set()
     for s, p, o in g:
@@ -74,7 +101,8 @@ def parse_document(url):
 
       entities_by_id[entity['@id']] = entity
 
-    return entities_by_id, list(entities_with_operations)
+  return entities_by_id, list(entities_with_operations), warnings, errors
+
 
 
 
