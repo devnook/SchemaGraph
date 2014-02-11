@@ -1,103 +1,103 @@
 <!DOCTYPE html>
 <html ng-app>
-  <head>
-    <title>Test Actions</title>
-    <link href='//fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="less/css/bootstrap.css">
-    <link rel="stylesheet" href="css/codemirror.css">
-    <link rel="stylesheet" href="css/prettify.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="http://voice-io.appspot.com/css/twilight.css">
-  </head>
-  <body controller="mainCtrl">
+<head>
+  <title>Test Actions</title>
+  <link href='//fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="less/css/bootstrap.css">
+  <link rel="stylesheet" href="css/codemirror.css">
+  <link rel="stylesheet" href="css/prettify.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="http://voice-io.appspot.com/css/twilight.css">
+</head>
+<body controller="mainCtrl">
 
 
 
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h1 class="map-appname">Test Actions</h1>
-        </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1 class="map-appname">Test Actions</h1>
       </div>
-      <div class="row">
-        <div class="col-md-12">
-          <ul class="nav nav-pills">
-            <li class="active"><a href="#html-input-tab" data-toggle="tab">HTML</a></li>
-            <li><a href="#url-input-tab" data-toggle="tab">URL</a></li>
-          </ul>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-pills">
+          <li class="active"><a href="#html-input-tab" data-toggle="tab">HTML</a></li>
+          <li><a href="#url-input-tab" data-toggle="tab">URL</a></li>
+        </ul>
 
-          <!-- Tab panes -->
-          <div class="tab-content">
-            <div class="tab-pane active" id="html-input-tab">
-              <textarea rows="4" id="code" placeholder="Paste html here"></textarea>
-              <button id="parse" class="btn btn-primary">Parse</button>
-            </div>
-            <div class="tab-pane" id="url-input-tab">
-              <textarea rows="4" id="provider-url" placeholder="Resource page url">http://localhost:8080/examples/restaurant</textarea>
-              <button id="fetch" class="btn btn-primary">crawl</button>
-            </div>
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <div class="tab-pane active" id="html-input-tab">
+            <textarea rows="4" id="code" placeholder="Paste html here"></textarea>
+            <button id="parse" class="btn btn-primary">Parse</button>
           </div>
-
-
-          <div id="provider-log">
-
+          <div class="tab-pane" id="url-input-tab">
+            <textarea rows="4" id="provider-url" placeholder="Resource page url">http://googleknowledge.github.io/ActionsSamples/restaurant.html</textarea>
+            <button id="fetch" class="btn btn-primary">crawl</button>
           </div>
         </div>
+
+
+        <div id="provider-log">
+
+        </div>
       </div>
+    </div>
 
-      <div class="row" id="raw-results">
+    <div class="row">
 
 
-        <div class="col-md-12">
-          <p class="alert alert-warning" id="validation-errors"></p>
+      <div class="col-md-12">
+        <p class="alert alert-warning" id="validation-errors"></p>
+
+
+        <div id="entities"></div>
+        <div id="raw-results">
+
           <a class="collapsed" data-toggle="collapse" data-target="#raw">
             Recognized entity graph
           </a>
-
           <div id="raw" class="collapse">
             <pre id="log" class="prettyprint lang-html linenums"></pre>
           </div>
+          <div>
 
-          <div id="entities"><div>
+          </div>
 
         </div>
 
+
+
+
       </div>
 
+      <div class="modal fade">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">Modal title</h4>
+            </div>
+            <div class="modal-body">
+              <p>One fine body&hellip;</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+      </div><!-- /.modal -->
 
 
-
-    </div>
-
-    <div class="modal fade">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title">Modal title</h4>
-      </div>
-      <div class="modal-body">
-        <p>One fine body&hellip;</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-    <script src="js/codemirror-compressed.js"></script>
-    <script type="text/javascript" src="/_ah/channel/jsapi"></script>
-
-
-    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/js/prettify.js"></script>
-    <script type="text/javascript" src="/js/mustache.js"></script>
-    <script type="text/javascript" src="/js/main.js"></script>
-  </body>
-</html>
+      <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+      <script type="text/javascript" src="js/libs/codemirror-compressed.js"></script>
+      <script type="text/javascript" src="/js/libs/bootstrap.min.js"></script>
+      <script type="text/javascript" src="/js/libs/prettify.js"></script>
+      <script type="text/javascript" src="/js/libs/mustache.js"></script>
+      <script type="text/javascript" src="/js/main.js"></script>
+    </body>
+    </html>
 
 

@@ -20,7 +20,7 @@ import webapp2
 import logging
 
 
-import parser
+import rdf_parser
 
 from google.appengine.api import users
 
@@ -77,15 +77,15 @@ class FetchHandler(webapp2.RequestHandler):
       url = self.request.get('url')
       rp = robotparser.RobotFileParser()
       # TODO(ewag): find right url!
-      rp.set_url("http://www.google.com/robots.txt")
-      rp.read()
-      if not rp.can_fetch('Googlebot', url):
-        response['errors'].append('Content not crawlable. Check robots.txt file for crawl permission.')
+      #rp.set_url("http://www.google.com/robots.txt")
+      #rp.read()
+      #if not rp.can_fetch('Googlebot', url):
+      #  response['errors'].append('Content not crawlable. Check robots.txt file for crawl permission.')
 
       (response['entities'],
        response['entities_with_operations'],
        response['warnings'],
-       response['errors']) = parser.parse_document(url)
+       response['errors']) = rdf_parser.parse_document(url)
 
       self.response.out.write(json.dumps(response))
 
@@ -95,7 +95,7 @@ class ParseHandler(webapp2.RequestHandler):
       (response['entities'],
        response['entities_with_operations'],
        response['warnings'],
-       response['errors']) = parser.parse_string(self.request.body)
+       response['errors']) = rdf_parser.parse_string(self.request.body)
       self.response.out.write(json.dumps(response))
 
 
