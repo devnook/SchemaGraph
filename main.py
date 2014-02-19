@@ -18,6 +18,8 @@ import jinja2
 import os
 import webapp2
 import logging
+import urllib
+import urllib2
 
 
 import rdf_parser
@@ -99,9 +101,22 @@ class ParseHandler(webapp2.RequestHandler):
       self.response.out.write(json.dumps(response))
 
 
+class ActionProxyHandler(webapp2.RequestHandler):
+    def post(self):
+      response = {}
+      data = json.loads(self.request.body)
+      method = data.get('method') if data.get('method') else 'GET'
+      if method == 'GET':
+        result = urllib2.urlopen(('%s?%s' % (data['url'], urllib.urlencode(data['params']))))
+      else:
+        result = urllib2.urlopen(data['url'], urllib.urlencode(data['params']))
+      self.response.out.write(json.dumps(response))
+
+
 app = webapp2.WSGIApplication([
     webapp2.Route('/fetch', handler=FetchHandler, name='fetch'),
     webapp2.Route('/parse', handler=ParseHandler, name='parse'),
+    webapp2.Route('/proxy', handler=ActionProxyHandler, name='action'),
     webapp2.Route('/examples/<sample>', handler=SampleHandler, name='sample'),
     ('/', MainHandler),
 ], debug=True)

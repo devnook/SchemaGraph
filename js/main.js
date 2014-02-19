@@ -52,52 +52,6 @@ actSbx.Google = function() {
   this.index = [];
 };
 
-// Dummy implementation for now. Assumes jsonLd in first script.
-actSbx.Google.prototype.parseHtml = function(htmlString) {
-  var dom = $.parseHTML(htmlString);
-  for (var i = 0, node; node = dom[i]; i++) {
-    if (node.nodeName == 'SCRIPT') {
-      var script = node;
-    }
-  }
-  console.log(dom)
-  console.log(script)
-  if (script) {
-    return obj = JSON.parse(script.innerHTML);
-  }
-};
-
-actSbx.Google.supportedEntityTypes = [
-  'Movie',
-  'MusicRecording',
-  'Restaurant'
-];
-
-actSbx.Google.supportedActionHandlerTypes = [
-  'WebPageHandler',
-  'HttpHandler'
-];
-
-actSbx.Google.findEntitiesWithOperations = function(key, jsonObj, parent) {
-    console.log(parent)
-    if (key === 'operation') {
-      console.log('OPERATIONS')
-      console.log(parent['@id'])
-
-    }
-    if( typeof jsonObj == "object" ) {
-        console.log(key)
-        $.each(jsonObj, function(k,v) {
-            // k is either an array index or object key
-            actSbx.Google.findEntitiesWithOperations(k, v, jsonObj);
-        });
-    }
-    else {
-        console.log(key + ': ' + jsonObj)
-    }
-}
-
-
 
 actSbx.Google.snippetTpl = '<div class="entity"><a href="{{id}}">{{name}}</a>' +
   '<p>Sample snippet here bla bla bkla</p>' +
@@ -172,7 +126,7 @@ actSbx.ActionWidget = function(url, method) {
 actSbx.RateActionWidget = function(entity, operation, handler) {
   console.log(handler)
 
-  actSbx.ActionWidget.call(this, entity['@id'], handler.httpMethod);
+  actSbx.ActionWidget.call(this, handler.url, handler.httpMethod);
 
   this.operation_ = operation;
   this.handler_ = handler;
@@ -202,10 +156,17 @@ actSbx.RateActionWidget.prototype.popup = function() {
   });
   this.popup_.find('select').change( function() {
     var config = {
-      type: self.method,
-      data: {'value': $(this).val()},
+      type: 'POST',
+      data: JSON.stringify({
+        url: self.url,
+        params: {'value': $(this).val()}
+      }),
+      //processData: false,
+      contentType: 'application/json; charset=utf-8',
       complete: function(e) {
         //alert('Action was complated');
+
+
         if (e.status === 200) {
           self.button_.text('Rated sucessfully!');
           self.button_.addClass('btn-success');
@@ -225,7 +186,7 @@ actSbx.RateActionWidget.prototype.popup = function() {
     }
     // What is the name of the param?
     // What about multiple ratings?
-    $.ajax(self.url, config);
+    $.ajax(location.origin + '/proxy', config);
     self.popup_.remove();
     return false;
   });
