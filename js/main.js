@@ -53,9 +53,10 @@ actSbx.Google = function() {
 };
 
 
-actSbx.Google.snippetTpl = '<div class="entity"><a href="{{id}}">{{name}}</a>' +
+actSbx.Google.snippetTpl = '<div class="entity">' +
+  '<p><a href="{{id}}">{{name}}</a></p>' +
   '<p>Sample snippet here bla bla bkla</p>' +
-  '<p><span class="action-widget"></span></p>';
+  '<div class="action-widget"></div></div>';
 
 
 actSbx.Google.prototype.crawl = function(url) {
@@ -109,9 +110,7 @@ actSbx.Google.prototype.renderSnippet = function(el, entity) {
   var rateAction = new actSbx.RateActionWidget(entity, operation, handler);
   rateAction.render($('.action-widget'));
 
-  rateAction.eventEmitter.on('action-call', function(e, status, url, data) {
-    $('#provider-log').append($('<p><span class="status ' + status + '">' + status + '</span> ' + url + ' <span class="params">' + data + '</span></p>'));
-  });
+
 }
 
 
@@ -120,7 +119,6 @@ actSbx.Google.prototype.renderSnippet = function(el, entity) {
 actSbx.ActionWidget = function(url, method) {
   this.url = url;
   this.method = method;
-  this.eventEmitter = $('<span></span>');
 };
 
 actSbx.RateActionWidget = function(entity, operation, handler) {
@@ -138,7 +136,7 @@ actSbx.RateActionWidget.prototype = new actSbx.ActionWidget();
 actSbx.RateActionWidget.prototype.render = function(parent) {
   this.button_ = $('<button class="action-link">Rate</button>');
   parent.append(this.button_);
-  this.log_ = $('<p class="log"></p>');
+  this.log_ = $('<div class="log"></div>');
   parent.append(this.log_);
   var self = this;
   this.button_.on('click', $.proxy(this.popup, this));
@@ -165,22 +163,30 @@ actSbx.RateActionWidget.prototype.popup = function() {
       contentType: 'application/json; charset=utf-8',
       complete: function(e) {
         //alert('Action was complated');
+        console.log(e)
 
+        var response = JSON.parse(e.responseText)
+        console.log(response)
+        var el = $('<div class="result"></div>');
+        self.log_.append(el);
 
-        if (e.status === 200) {
-          self.button_.text('Rated sucessfully!');
-          self.button_.addClass('btn-success');
-        } else {
-          self.button_.text('Action unsuccessful:(');
-          self.button_.addClass('btn-danger');
+        if (response.errors) {
+          self.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
+          el.append($('<p><span class="text-danger">Request malformed: ' +
+            response.errors.join('\n') + '</span></p> '));
         }
-        var msg = e.status + ' ' + e.statusText + ': ' + this.url;
-        console.log(this)
-        //self.eventEmitter.trigger('action-call', [e.status + ' ' + e.statusText, this.url, this.data])
-        self.log_.append($('<p><span class="status ' + e.status + '">' +
-            e.status + ' ' + e.statusText + '</span> ' + this.url +
-            ' <span class="params">' + this.data + '</span></p>' +
-            '<p>Debug: curl --data-urlencode "' + this.data + '" ' + this.url + '</p>'));
+
+        if (response.result && response.result.code === '200 OK') {
+          self.button_.text('Rated sucessfully!').addClass('btn-success').removeClass('btn-danger');
+        } else {
+          self.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
+        }
+
+
+        el.append($('<p><span class="status ' + response.result.code + '">' +
+            response.result.code + '</span> ' + response.result.url +
+            ' <span class="params">' + (response.result.params || '') + '</span></p>' +
+            '<p class="debug">Debug: ' + response.result.debug+ '</p>'));
         self.popup_.remove();
       }
     }

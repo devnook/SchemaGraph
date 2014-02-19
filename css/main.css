@@ -89,5 +89,33 @@ textarea {
 .entity {
   background-color: #fff;
   margin: 10px 0;
-  padding: 10px;
+}
+
+.entity > p {
+  margin: 10px;
+}
+
+.entity > p:first-child {
+  padding-top: 10px;
+}
+
+.action-widget {
+padding: 0 10px;
+}
+
+.result {
+border-top: 5px solid #eee;
+margin: 0 -10px;
+padding: 10px 10px 0 10px;
+}
+
+.action-link {
+  margin-bottom: 10px;
+}
+
+.debug {
+  color: #666;
+  padding: 0 0 10px 0;
+margin: 0;
+font-style: italic;
 }

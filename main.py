@@ -100,16 +100,43 @@ class ParseHandler(webapp2.RequestHandler):
        response['errors']) = rdf_parser.parse_string(self.request.body)
       self.response.out.write(json.dumps(response))
 
+import urlparse
 
 class ActionProxyHandler(webapp2.RequestHandler):
     def post(self):
       response = {}
       data = json.loads(self.request.body)
       method = data.get('method') if data.get('method') else 'GET'
-      if method == 'GET':
-        result = urllib2.urlopen(('%s?%s' % (data['url'], urllib.urlencode(data['params']))))
-      else:
-        result = urllib2.urlopen(data['url'], urllib.urlencode(data['params']))
+      result = None
+      try:
+        if method == 'GET':
+          result = urllib2.urlopen(('%s?%s' % (data['url'], urllib.urlencode(data['params']))))
+        else:
+          result = urllib2.urlopen(data['url'], urllib.urlencode(data['params']))
+
+      except urllib2.HTTPError as e:
+        print dir(e)
+        result = e
+
+      except urllib2.URLError as e:
+        print dir(e)
+        response['errors'] = []
+        response['errors'].append(e.reason)
+
+      if result:
+        print dir(result)
+        print str(result)
+
+        debug = 'curl --request %s "%s"' % (method.upper(), result.geturl())
+
+        url_parts = result.geturl().split('?')
+        response['result'] = {
+          'url': url_parts[0],
+          'params': url_parts[1],
+          'code': '%s %s' % (str(result.getcode()), result.msg),
+          'debug': debug
+        }
+      print response
       self.response.out.write(json.dumps(response))
 
 
