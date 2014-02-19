@@ -93,6 +93,8 @@ actSbx.Google.prototype.displayEntities = function(entityIds) {
 
 };
 
+
+
 actSbx.Google.prototype.renderSnippet = function(el, entity) {
   var G = this;
   var view = {
@@ -105,12 +107,18 @@ actSbx.Google.prototype.renderSnippet = function(el, entity) {
 
   var operation = G.entities[entity.operation['@id']]
   var handler = G.entities[operation.actionHandler['@id']]
-  console.log(operation)
 
-  var rateAction = new actSbx.RateActionWidget(entity, operation, handler);
-  rateAction.render($('.action-widget'));
+  var actionWidgetClass = actSbx.actionTypeToWidgetMap[operation['@type']];
+  if (actionWidgetClass) {
+    var widget = new actionWidgetClass(entity, operation, handler);
+    widget.render($('.action-widget'));
+  } else {
+    if ($('#validation-errors').text()) {
+      $('#validation-errors').append($('<br>'))
+    }
 
-
+    $('#validation-errors').append('Action ' + operation['@type'] + ' not implemented')
+  }
 }
 
 
@@ -200,7 +208,9 @@ actSbx.RateActionWidget.prototype.popup = function() {
 
 
 
-
+actSbx.actionTypeToWidgetMap = {
+  'ReviewAction': actSbx.RateActionWidget
+};
 
 
 
