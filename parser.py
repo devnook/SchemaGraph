@@ -97,6 +97,8 @@ def process_graph(g):
     obj = json.loads(output)
     entities_by_id = {}
 
+    print output
+
     for entity in obj['@graph']:
 
       entities_by_id[entity['@id']] = entity

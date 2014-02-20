@@ -76,7 +76,7 @@ actSbx.Google.prototype.processResponse = function(response) {
   this.entities = responseObj['entities'];
   $('#raw-results').show();
   $('#log').text(JSON.stringify(this.entities, undefined, 2));
-  $('#validation-errors').text(responseObj['errors'])
+  $('#validation-errors').text('').text(responseObj['errors'])
   $('#entities').html('');
   this.displayEntities(responseObj['entities_with_operations'])
 };
@@ -114,9 +114,8 @@ actSbx.Google.prototype.renderSnippet = function(el, entity) {
     widget.render($('.action-widget'));
   } else {
     if ($('#validation-errors').text()) {
-      $('#validation-errors').append($('<br>'))
+      $('#validation-errors').append($('<br>'));
     }
-
     $('#validation-errors').append('Action ' + operation['@type'] + ' not implemented')
   }
 }
