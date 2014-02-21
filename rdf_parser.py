@@ -3,6 +3,8 @@ import rdflib
 
 import validator
 
+import jsonld
+
 from rdflib import Graph, plugin
 from rdflib.serializer import Serializer
 from rdflib.parser import Parser
@@ -105,9 +107,23 @@ def main():
 
 
 
+
+
   print(g1.serialize(format='json-ld', auto_compact=True, indent=4))
 
+  doc = json.loads(g1.serialize(format='json-ld', auto_compact=True, indent=4))
+  frame = {
+    "@type": "http://schema.org/Restaurant"
+  }
 
+  framed = jsonld.frame(doc, frame)
+
+  pp = pprint.PrettyPrinter(indent=2)
+  pp.pprint(framed)
+
+  print framed
+
+import pprint
 
 if __name__ == '__main__':
    main()
