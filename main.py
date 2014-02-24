@@ -84,8 +84,9 @@ class FetchHandler(webapp2.RequestHandler):
       #if not rp.can_fetch('Googlebot', url):
       #  response['errors'].append('Content not crawlable. Check robots.txt file for crawl permission.')
 
-      (response['entities'],
-       response['entities_with_operations'],
+
+      (response['graph'],
+       response['entities'],
        response['warnings'],
        response['errors']) = rdf_parser.parse_document(url)
 
@@ -94,8 +95,8 @@ class FetchHandler(webapp2.RequestHandler):
 class ParseHandler(webapp2.RequestHandler):
     def post(self):
       response = {}
-      (response['entities'],
-       response['entities_with_operations'],
+      (response['graph'],
+       response['entities'],
        response['warnings'],
        response['errors']) = rdf_parser.parse_string(self.request.body)
       self.response.out.write(json.dumps(response))
@@ -104,9 +105,16 @@ import urlparse
 
 class ActionProxyHandler(webapp2.RequestHandler):
     def post(self):
-      response = {}
+      response = {
+        'errors': []
+      }
       data = json.loads(self.request.body)
       method = data.get('method') if data.get('method') else 'GET'
+      url = None
+
+
+
+
       result = None
       try:
         if method == 'GET':
@@ -115,12 +123,9 @@ class ActionProxyHandler(webapp2.RequestHandler):
           result = urllib2.urlopen(data['url'], urllib.urlencode(data['params']))
 
       except urllib2.HTTPError as e:
-        print dir(e)
         result = e
 
       except urllib2.URLError as e:
-        print dir(e)
-        response['errors'] = []
         response['errors'].append(e.reason)
 
       if result:
@@ -136,6 +141,7 @@ class ActionProxyHandler(webapp2.RequestHandler):
           'code': '%s %s' % (str(result.getcode()), result.msg),
           'debug': debug
         }
+
       print response
       self.response.out.write(json.dumps(response))
 
