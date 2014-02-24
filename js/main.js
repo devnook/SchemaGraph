@@ -13,7 +13,6 @@ $(document).ready(function(){
     var data = editor.getValue();
 
     $.post(url, data, function(response) {
-      console.log(response);
       google.processResponse(response);
     });
   });
@@ -74,19 +73,21 @@ actSbx.Google.prototype.crawl = function(url) {
 actSbx.Google.prototype.processResponse = function(response) {
   var responseObj = JSON.parse(response);
   this.entities = responseObj['entities'];
+
   $('#raw-results').show();
-  $('#log').text(JSON.stringify(this.entities, undefined, 2));
+  $('#log').text(JSON.stringify(responseObj.graph, undefined, 2));
+
+  //this.renderGraph(responseObj.graph);
   $('#validation-errors').text('').text(responseObj['errors'])
   $('#entities').html('');
-  this.displayEntities(responseObj['entities_with_operations'])
+  this.displayEntities(responseObj['entities'])
 };
 
-actSbx.Google.prototype.displayEntities = function(entityIds) {
+actSbx.Google.prototype.displayEntities = function(entities) {
   var el = $('#entities');
   var G = this;
-  if (entityIds) {
-    $.each(entityIds, function(id, entityId) {
-      entity = G.entities[entityId]
+  if (entities) {
+    $.each(entities, function(id, entity) {
       G.renderSnippet(el, entity);
     })
   }
@@ -95,63 +96,121 @@ actSbx.Google.prototype.displayEntities = function(entityIds) {
 
 
 
+actSbx.Google.supportedOperationProperties = [
+  'http://schema.org/operation',
+  'http://schema.org/reservations'
+];
+
 actSbx.Google.prototype.renderSnippet = function(el, entity) {
   var G = this;
   var view = {
-    name: entity.name,
+    name: entity['http://schema.org/name'],
     id: entity['@id']
   };
   console.log(entity)
   var output = Mustache.render(actSbx.Google.snippetTpl, view);
   el.append($(output))
 
-  var operation = G.entities[entity.operation['@id']]
-  var handler = G.entities[operation.actionHandler['@id']]
+  var operations = [];
 
-  var actionWidgetClass = actSbx.actionTypeToWidgetMap[operation['@type']];
-  if (actionWidgetClass) {
-    var widget = new actionWidgetClass(entity, operation, handler);
-    widget.render($('.action-widget'));
-  } else {
-    if ($('#validation-errors').text()) {
-      $('#validation-errors').append($('<br>'));
+  var operation = entity['http://schema.org/operation'];
+
+  if (operation) {
+    var actionWidgetClass = actSbx.actionTypeToWidgetMap[operation['@type']];
+    if (actionWidgetClass) {
+      var widget = new actionWidgetClass(operation);
+      widget.render($('.action-widget'));
+    } else {
+      if ($('#validation-errors').text()) {
+        $('#validation-errors').append($('<br>'));
+      }
+      $('#validation-errors').append('Action ' + operation['@type'] + ' not implemented')
     }
-    $('#validation-errors').append('Action ' + operation['@type'] + ' not implemented')
+
   }
+
+  $.each(actSbx.Google.supportedOperationProperties, function(property) {
+    if (entity[property]) {
+      if (entity[property]) {
+
+      }
+
+    }
+  })
+
+
+
+
 }
 
 
 
 
-actSbx.ActionWidget = function(url, method) {
-  this.url = url;
-  this.method = method;
-};
-
-actSbx.RateActionWidget = function(entity, operation, handler) {
-  console.log(handler)
-
-  actSbx.ActionWidget.call(this, handler.url, handler.httpMethod);
-
+actSbx.ActionWidget = function(operation) {
   this.operation_ = operation;
-  this.handler_ = handler;
   this.button_ = null;
+  this.log_ = null;
+  this.method_ = operation['http://schema.org/actionHandler']['http://schema.org/httpMethod'];
+  this.name_ = operation['http://schema.org/actionHandler']['http://schema.org/name'];
+  this.url_ = operation['http://schema.org/actionHandler']['http://schema.org/url'];
 };
 
-actSbx.RateActionWidget.prototype = new actSbx.ActionWidget();
 
-actSbx.RateActionWidget.prototype.render = function(parent) {
-  this.button_ = $('<button class="action-link">Rate</button>');
-  parent.append(this.button_);
+
+actSbx.ActionWidget.prototype.render = function(parent) {
+  this.button_ = $('<button class="action-link">' + this.name_ + '</button>');
   this.log_ = $('<div class="log"></div>');
+  parent.append(this.button_);
   parent.append(this.log_);
   var self = this;
-  this.button_.on('click', $.proxy(this.popup, this));
+  this.button_.on('click', $.proxy(this.launch, this));
 };
 
-actSbx.RateActionWidget.prototype.popup = function() {
+
+
+actSbx.ActionWidget.prototype.callback = function(e) {
+  var el = $('<div class="result"></div>');
+  this.log_.append(el);
+  if (e.status !== 200) {
+    el.append($('<p><span class="text-danger">Server error</span></p> '));
+    return;
+  }
+  var response = JSON.parse(e.responseText)
+  this.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
+  if (response.errors.length) {
+
+    el.append($('<p><span class="text-danger">Request malformed: ' +
+      response.errors.join('\n') + '</span></p> '));
+  }
+
+  if (response.warnings.length) {
+    el.append($('<p><span class="text-warning">Warning: ' +
+      response.warnings.join('\n') + '</span></p> '));
+  }
+
+  if (response.result) {
+    if (response.result.code === '200 OK') {
+      this.button_.text('Rated sucessfully!').addClass('btn-success').removeClass('btn-danger');
+    }
+    el.append($('<p><span class="status ' + response.result.code + '">' +
+        response.result.code + '</span> ' + response.result.url +
+        ' <span class="params">' + (response.result.params || '') + '</span></p>' +
+        '<p class="debug">Debug: ' + response.result.debug+ '</p>'));
+  }
+}
+
+
+actSbx.RateActionWidget = function(operation) {
+  actSbx.ActionWidget.call(this, operation);
+};
+
+actSbx.RateActionWidget.prototype = Object.create(actSbx.ActionWidget.prototype);
+
+
+
+actSbx.RateActionWidget.prototype.launch = function() {
   // Seems there might be multiple action handlers.
-  this.popup_ = $('<div class="popup"><p>' + this.handler_.name  +
+  this.popup_ = $('<div class="popup"><p>' + this.name_  +
     '</p><p><select><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></p><p><a href="#" class="btn cancel">cancel</a></p></div>');
   $('body').append(this.popup_);
   var self = this;
@@ -163,37 +222,13 @@ actSbx.RateActionWidget.prototype.popup = function() {
     var config = {
       type: 'POST',
       data: JSON.stringify({
-        url: self.url,
+        url: self.url_,
         params: {'value': $(this).val()}
       }),
       //processData: false,
       contentType: 'application/json; charset=utf-8',
       complete: function(e) {
-        //alert('Action was complated');
-        console.log(e)
-
-        var response = JSON.parse(e.responseText)
-        console.log(response)
-        var el = $('<div class="result"></div>');
-        self.log_.append(el);
-
-        if (response.errors) {
-          self.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
-          el.append($('<p><span class="text-danger">Request malformed: ' +
-            response.errors.join('\n') + '</span></p> '));
-        }
-
-        if (response.result && response.result.code === '200 OK') {
-          self.button_.text('Rated sucessfully!').addClass('btn-success').removeClass('btn-danger');
-        } else {
-          self.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
-        }
-
-
-        el.append($('<p><span class="status ' + response.result.code + '">' +
-            response.result.code + '</span> ' + response.result.url +
-            ' <span class="params">' + (response.result.params || '') + '</span></p>' +
-            '<p class="debug">Debug: ' + response.result.debug+ '</p>'));
+        self.callback(e)
         self.popup_.remove();
       }
     }
@@ -208,7 +243,7 @@ actSbx.RateActionWidget.prototype.popup = function() {
 
 
 actSbx.actionTypeToWidgetMap = {
-  'ReviewAction': actSbx.RateActionWidget
+  'http://schema.org/ReviewAction': actSbx.RateActionWidget
 };
 
 

@@ -4624,11 +4624,12 @@ _possible_trust_root_certificates = [
     '~/Library/OpenSSL/certs/ca-certificates.crt',
     '/System/Library/OpenSSL/certs/ca-certificates.crt',
 ]
-for path in _possible_trust_root_certificates:
+"""for path in _possible_trust_root_certificates:
     path = os.path.expanduser(path)
     if os.path.exists(path):
         _trust_root_certificates = path
         break
+"""
 # FIXME: warn if not found?  MacOS X uses keychain vs file.
 
 
