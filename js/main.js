@@ -76,6 +76,7 @@ actSbx.Google.prototype.processResponse = function(response) {
 
   $('#raw-results').show();
   $('#log').text(JSON.stringify(responseObj.graph, undefined, 2));
+  $('#graph').html('');
 
   //this.renderGraph(responseObj.graph);
   $('#validation-errors').text('').text(responseObj['errors'])

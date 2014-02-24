@@ -42,7 +42,7 @@ def parse_document(url):
 def parse_string(docString):
   doc = html5lib.parse(docString, treebuilder="dom")
   g, parse_errors = process_dom(doc, None)
-  entities, warnings, errors = process_graph(g)
+  graph, entities, warnings, errors = process_graph(g)
   return graph, entities, warnings, errors + parse_errors
 
 
