@@ -119,3 +119,22 @@ padding: 10px 10px 0 10px;
 margin: 0;
 font-style: italic;
 }
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+circle:hover+text {
+  opacity: 1.0;
+  font-weight: bold;
+}
+
+circle+text {
+ opacity: .4;
+}

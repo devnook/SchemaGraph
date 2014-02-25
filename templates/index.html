@@ -50,18 +50,24 @@
 
     <div class="col-md-12">
       <p class="alert alert-warning" id="validation-errors"></p>
-      <div id="entities"></div>
+      <div id="entities-section" style="display: none;">
+        <a class="" data-toggle="collapse" data-target="#entities-list">
+          Recognized actions
+        </a>
+        <div id="entities-list" class="in">
+          <div id="entities"></div>
+        </div>
+      </div>
+
+
       <div id="raw-results">
         <a class="collapsed" data-toggle="collapse" data-target="#raw">
           Recognized entity graph
         </a>
         <div id="raw" class="collapse">
           <pre id="log" class="prettyprint lang-html linenums"></pre>
-          <button id="graph-render" class="btn btn-primary">Render</button>
-          <div id="graph">
-
-          </div>
-
+          <button id="graph-render" class="btn btn-primary">Visualize</button>
+          <div id="graph"><div>
         </div>
       <div>
     </div>
@@ -72,284 +78,17 @@
 
 
 </div>
-
-
-<style>
-
-.node {
-  stroke: #fff;
-  stroke-width: 1.5px;
-}
-
-.link {
-  stroke: #999;
-  stroke-opacity: .6;
-}
-
-circle:hover+text {
-  opacity: 1.0;
-  font-weight: bold;
-}
-
-circle+text {
- opacity: .4;
-}
-
-</style>
       <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
       <script src="/js/libs/jsonld.js"></script>
 
       <script src="/js/libs/d3.v3.min.js" charset="utf-8"></script>
-      <script type="text/javascript">
 
-      $('#graph-render').on('click', function () {
-        var graph = JSON.parse($('pre#log').text().trim());
-
-        renderGraph(graph);
-      })
-
-
-
-//#fcb960
-//#fcb960
-var COLORS = {
-  '<http://schema.org/Restaurant>': '#a93938',
-  '<http://schema.org/ReviewAction>': '#938a3b',
-  '<http://schema.org/HttpHandler>': '#fcb960'
-}
-
-var color = function(nodeType) {
-  return COLORS[nodeType] || '#666';
-};
-
-d3.selection.prototype.moveToFront = function() {
-  return this.each(function(){
-    this.parentNode.appendChild(this);
-  });
-};
-
-var renderGraph = function(graph) {
-
-  var width = 960,
-      height = 400;
-
-
-
-var force = d3.layout.force()
-    .charge(-400)
-    .linkDistance(60)
-    .size([width, height]);
-
-var svg = d3.select("#graph").append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-var process = function(error, graph) {
-  force
-      .nodes(graph.nodes)
-      .links(graph.links)
-      .start();
-
-  var link = svg.selectAll(".link")
-      .data(graph.links)
-    .enter().append("line")
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-
-
-
-  var gnodes = svg.selectAll("g.node")
-      .data(graph.nodes)
-      .enter()
-      .append('g')
-      .classed('gnode', true);
-
-  var node = gnodes.append("circle")
-      .attr("class", "node")
-      .attr("r", 20)
-      .style("fill", function(d) { return color(d.group); });
-
-      //.call(force.drag);
-
-  var labels = gnodes.append("text")
-    .text(function(d) {
-      if (d.name.indexOf('<') === 0) {
-        d.name = d.name.replace('<http://', '').replace('>', '')
-        d.name = d.name.substring(d.name.indexOf('/'));
-      } else {
-        d.name = d.name.replace(/\"/g, '')
-      }
-
-      console.log(d.name);
-      return d.name;
-    });
-
-  node.append("title")
-      .text(function(d) { return d.name; });
-
-  force.on("tick", function() {
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    //node.attr("cx", function(d) { return d.x; })
-    //    .attr("cy", function(d) { return d.y; });
-
-     gnodes.attr("transform", function(d) {
-        return 'translate(' + [d.x, d.y] + ')';
-    });
-
-     gnodes.on("mouseover",function(){
-      var sel = d3.select(this);
-      sel.moveToFront();
-    })
-  });
-
-
-
-};
-
-var nodes = [];
-var links = [];
-
-var nodeIndexes = {};
-
-jsonld.toRDF(graph, {format: 'application/nquads'}, function(err, nquads) {
-  console.log(nquads)
-
-  if (!nquads) {
-    console.log(err)
-    return;
-  }
-  nquads = nquads.split('\n')
-
-  console.log(nquads)
-
-  for (var i = 0, nquad; nquad = nquads[i]; i++) {
-    var triple = nquad.replace(/\"(.)*\"/g, function(match) {
-      return match.replace(/\s/g, '&nbsp;')
-    }).split(' ');
-    console.log(triple)
-
-    var sourceIndex = nodeIndexes[triple[0]];
-    if (sourceIndex === undefined) {
-      var node = {
-        'name': triple[0].replace(/&nbsp;/g, ' '),
-        'group': 1
-      }
-      sourceIndex = nodes.push(node) - 1;
-      nodeIndexes[node.name] = sourceIndex;
-    }
-
-    if (triple[1] !== '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
-
-      var targetIndex = nodeIndexes[triple[2]];
-      if (targetIndex === undefined) {
-        var node = {
-          'name': triple[2].replace(/&nbsp;/g, ' '),
-          'group': 1
-        }
-        targetIndex = nodes.push(node) - 1;
-        nodeIndexes[node.name] = targetIndex;
-      }
-      var link = {
-        "source": sourceIndex,
-        "target": targetIndex,
-        "value": 5
-      }
-      links.push(link)
-    } else {
-      nodes[sourceIndex]['group'] = triple[2];
-    }
-
-  }
-
-  console.log(nodes)
-  console.log(links)
-  var g = {
-    nodes: nodes,
-    links: links
-  }
-  process(null, g)
-});
-
-};
-
-
-
-    var graph = {
-  "@graph": [
-    {
-      "@type": "http://schema.org/ItemList",
-      "@id": "http://googleknowledge.github.io/restaurants/123/reservations"
-    },
-    {
-      "@type": "http://schema.org/ItemList",
-      "@id": "http://googleknowledge.github.io/restaurants/123/orders"
-    },
-    {
-      "@type": "http://schema.org/HttpHandler",
-      "http://schema.org/name": "Review this restaurant",
-      "http://schema.org/url": "http://googleknowledge.github.io/ActionsSamples/restaurant.html",
-      "@id": "_:Nf237f4124e124e51992cb1f56f95572c",
-      "http://schema.org/httpMethod": "get"
-    },
-    {
-      "@type": "http://schema.org/ReviewAction",
-      "http://schema.org/actionHandler": {
-        "@id": "_:Nf237f4124e124e51992cb1f56f95572c"
-      },
-      "@id": "http://googleknowledge.github.io/ActionsSamples/aaa",
-      "http://schema.org/actionStatus": "proposed"
-    },
-    {
-      "@type": "http://schema.org/Menu",
-      "http://schema.org/name": "My awesome menu!",
-      "@id": "_:N65b6479508ab423781a5aba6faa6a969",
-      "http://schema.org/menuItem": {
-        "@id": "http://googleknowledge.github.io/restaurants/123/menu/1"
-      }
-    },
-    {
-      "http://schema.org/reservations": {
-        "@id": "http://googleknowledge.github.io/restaurants/123/reservations"
-      },
-      "http://schema.org/cuisine": "pizzeria",
-      "http://schema.org/menu": {
-        "@id": "_:N65b6479508ab423781a5aba6faa6a969"
-      },
-      "@type": "http://schema.org/Restaurant",
-      "http://schema.org/orders": {
-        "@id": "http://googleknowledge.github.io/restaurants/123/orders"
-      },
-      "http://schema.org/operation": {
-        "@id": "http://googleknowledge.github.io/ActionsSamples/aaa"
-      },
-      "http://schema.org/name": "Sam's Pizza Place",
-      "@id": "http://googleknowledge.github.io/examples/restaurant.html"
-    }
-  ],
-  "@context": {
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#"
-  }
-}
-
-//renderGraph(graph);
-
-
-
-
-
-
-      </script>
 
       <script type="text/javascript" src="js/libs/codemirror-compressed.js"></script>
       <script type="text/javascript" src="/js/libs/bootstrap.min.js"></script>
       <script type="text/javascript" src="/js/libs/prettify.js"></script>
       <script type="text/javascript" src="/js/libs/mustache.js"></script>
+      <script type="text/javascript" src="/js/graph.js"></script>
       <script type="text/javascript" src="/js/main.js"></script>
     </body>
   </html>

@@ -32,6 +32,14 @@ $(document).ready(function(){
   editor.setValue('<script type="application/ld+json">\n  ...\n</script>')
   editor.setSize('100%', '150px')
 
+  $('#graph-render').on('click', function () {
+        var graph = JSON.parse($('pre#log').text().trim());
+
+        renderGraph(graph);
+      })
+
+
+
 
 
 
@@ -74,24 +82,31 @@ actSbx.Google.prototype.processResponse = function(response) {
   var responseObj = JSON.parse(response);
   this.entities = responseObj['entities'];
 
-  $('#raw-results').show();
-  $('#log').text(JSON.stringify(responseObj.graph, undefined, 2));
+
+
+
   $('#graph').html('');
 
   //this.renderGraph(responseObj.graph);
   $('#validation-errors').text('').text(responseObj['errors'])
   $('#entities').html('');
-  this.displayEntities(responseObj['entities'])
+  if (responseObj['entities'].length) {
+    this.displayEntities(responseObj['entities'])
+    $('#raw-results').show();
+    $('#log').text(JSON.stringify(responseObj.graph, undefined, 2));
+  }
 };
 
 actSbx.Google.prototype.displayEntities = function(entities) {
   var el = $('#entities');
   var G = this;
-  if (entities) {
-    $.each(entities, function(id, entity) {
-      G.renderSnippet(el, entity);
-    })
-  }
+
+  $('#entities-section').show();
+
+  $.each(entities, function(id, entity) {
+    G.renderSnippet(el, entity);
+  })
+
 
 };
 
@@ -159,7 +174,7 @@ actSbx.ActionWidget = function(operation) {
 
 
 actSbx.ActionWidget.prototype.render = function(parent) {
-  this.button_ = $('<button class="action-link">' + this.name_ + '</button>');
+  this.button_ = $('<button class="action-link btn">' + this.name_ + '</button>');
   this.log_ = $('<div class="log"></div>');
   parent.append(this.button_);
   parent.append(this.log_);
@@ -170,21 +185,21 @@ actSbx.ActionWidget.prototype.render = function(parent) {
 
 
 actSbx.ActionWidget.prototype.callback = function(e) {
-  var el = $('<div class="result"></div>');
-  this.log_.append(el);
+  //var el = $('<div class="result"></div>');
+  var el = this.log_.find('.result').last();
   if (e.status !== 200) {
     el.append($('<p><span class="text-danger">Server error</span></p> '));
     return;
   }
   var response = JSON.parse(e.responseText)
   this.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
-  if (response.errors.length) {
+  if (response.errors && response.errors.length) {
 
     el.append($('<p><span class="text-danger">Request malformed: ' +
       response.errors.join('\n') + '</span></p> '));
   }
 
-  if (response.warnings.length) {
+  if (response.warnings && response.warnings.length) {
     el.append($('<p><span class="text-warning">Warning: ' +
       response.warnings.join('\n') + '</span></p> '));
   }
@@ -220,6 +235,11 @@ actSbx.RateActionWidget.prototype.launch = function() {
     return false;
   });
   this.popup_.find('select').change( function() {
+    var el = $('<div class="result"></div>');
+    self.log_.append(el);
+
+    el.append($('<p class="debug">Sending request to ' + self.url_ + ' ...</p> '));
+
     var config = {
       type: 'POST',
       data: JSON.stringify({
