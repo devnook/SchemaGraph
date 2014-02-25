@@ -130,11 +130,22 @@ font-style: italic;
   stroke-opacity: .6;
 }
 
+circle+text:hover,
 circle:hover+text {
   opacity: 1.0;
   font-weight: bold;
 }
 
 circle+text {
- opacity: .4;
+ opacity: .3;
+}
+
+#graph-modal .modal-dialog {
+  width: auto;
+  margin: 30px;
+}
+
+.graph-details {
+  float: left;
+  position: absolute;
 }

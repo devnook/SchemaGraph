@@ -12,9 +12,19 @@ $(document).ready(function(){
 
     var data = editor.getValue();
 
-    $.post(url, data, function(response) {
-      google.processResponse(response);
+
+
+    $.ajax({
+      type: "POST",
+      url: url,
+      data: data,
+      success: $.proxy(google.processResponse, google),
+      error: function(xhr, e, exception) {
+        var msg = exception || e.toUpperCase();
+        $('#validation-errors').text('').text(msg)
+      }
     });
+
   });
 
 
@@ -35,7 +45,9 @@ $(document).ready(function(){
   $('#graph-render').on('click', function () {
         var graph = JSON.parse($('pre#log').text().trim());
 
-        renderGraph(graph);
+
+
+        renderGraph(graph, '#graph');
       })
 
 
@@ -62,7 +74,7 @@ actSbx.Google = function() {
 
 actSbx.Google.snippetTpl = '<div class="entity">' +
   '<p><a href="{{id}}">{{name}}</a></p>' +
-  '<p>Sample snippet here bla bla bkla</p>' +
+  '<p>This is an example search result </p>' +
   '<div class="action-widget"></div></div>';
 
 

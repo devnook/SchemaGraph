@@ -40,6 +40,117 @@
 }
 </script>
 
+<script type="application/ld+json">
+{
+  "@type": "ItemList",
+  "@id": "http://code.sgo.to/restaurants/123/orders",
+  "name": "Online Orders",
+  "operation": [
+    {
+      "@type": "CreateAction",
+      "actionStatus": "proposed",
+      "expects": {
+        "@type": "SupportedClass",
+        "supportedProperty": [
+          {
+            "@type": "SupportedProperty",
+            "property": "http://schema.org/object",
+            "rangeIncludes": {
+              "@type": "supportedClass",
+              "subClassOf": "Order",
+              "supportedProperty": [
+                {
+                  "@type": "SupportedProperty",
+                  "property": "http://schema.org/customer",
+                  "occurs": "Exactly-One",
+                  "rangeIncludes": {
+                    "@type": "SupportedClass",
+                    "subClassOf": "Person",
+                    "supportedProperty": [
+                      "http://schema.org/name"
+                    ]
+                  }
+                },
+                {
+                  "@type": "SupportedProperty",
+                  "property": "http://schema.org/deliveryAddress",
+                  "occurs": "One-or-Zero",
+                  "rangeIncludes": {
+                    "@type": "SupportedClass",
+                    "subClassOf": "PostalAddress",
+                    "supportedProperty": [
+                      "http://schema.org/streetAddress",
+                      "http://schema.org/addressLocality",
+                      "http://schema.org/addressRegion",
+                      "http://schema.org/postalCode"
+                    ]
+                  }
+                },
+                {
+                  "@type": "SupportedProperty",
+                  "property": "http://schema.org/discountCode",
+                  "occurs": "One-or-Zero"
+                },
+                {
+                  "@type": "SupportedProperty",
+                  "property": "http://schema.org/deliveryMethod",
+                  "occurs": "One-or-Zero"
+                },
+                {
+                  "@type": "SupportedProperty",
+                  "property": "http://schema.org/orderedItem",
+                  "occurs": "Zero-or-Many",
+                  "rangeIncludes": {
+                    "@type": "SupportedClass",
+                    "subClassOf": "Product",
+                    "supportedProperty": [
+                      {
+                        "@type": "SupportedProperty",
+                        "property": "http://schema.org/id",
+                        "occurs": "Exactly-One"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "actionHandler": [
+        {
+          "@type": "HttpHandler",
+          "name": "Orders food from this restaurant. Check out the schema here http://www.w3.org/wiki/images/d/d4/Schema.org_Orders_Proposal_2013-04-19.pdf"
+        }
+      ]
+    },
+    {
+      "@type": "QuoteAction",
+      "url": "/restaurants/123/orders/quotes",
+      "actionStatus": "proposed",
+      "expects": [
+        {
+          "@type": "SupportedProperty",
+          "property": "http://schema.org/object",
+          "occurs": "Exactly-One",
+          "rangeIncludes": {
+            "@type": "SupportedClass",
+            "subClassOf": "Order"
+          }
+        }
+      ],
+      "actionHandler": [
+        {
+          "@type": "HttpHandler",
+          "name": "Quotes orders"
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+
 
 
 
