@@ -99,7 +99,7 @@ circle+text {
       <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
       <script src="/js/libs/jsonld.js"></script>
 
-      <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+      <script src="/js/libs/d3.v3.min.js" charset="utf-8"></script>
       <script type="text/javascript">
 
       $('#graph-render').on('click', function () {
@@ -120,6 +120,12 @@ var COLORS = {
 
 var color = function(nodeType) {
   return COLORS[nodeType] || '#666';
+};
+
+d3.selection.prototype.moveToFront = function() {
+  return this.each(function(){
+    this.parentNode.appendChild(this);
+  });
 };
 
 var renderGraph = function(graph) {
@@ -193,6 +199,11 @@ var process = function(error, graph) {
      gnodes.attr("transform", function(d) {
         return 'translate(' + [d.x, d.y] + ')';
     });
+
+     gnodes.on("mouseover",function(){
+      var sel = d3.select(this);
+      sel.moveToFront();
+    })
   });
 
 
