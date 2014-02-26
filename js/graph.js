@@ -22,7 +22,7 @@ var COLORS = {
   '<http://schema.org/ReviewAction>': '#938a3b',
   '<http://schema.org/CreateAction>': '#938a3b',
   '<http://schema.org/QuoteAction>': '#938a3b',
-  // Handlrs
+  // Handlers
   '<http://schema.org/HttpHandler>': '#fcb960'
 }
 
@@ -169,7 +169,8 @@ var renderGraph = function(graph, parentId) {
         var sourceIndex = nodeIndexes[triple[0]];
         if (sourceIndex === undefined) {
           var node = {
-            'name': triple[0]
+            'name': triple[0],
+            'properties': {}
           }
           sourceIndex = nodes.push(node) - 1;
           nodeIndexes[node.name] = sourceIndex;
@@ -180,10 +181,9 @@ var renderGraph = function(graph, parentId) {
           nodes[sourceIndex]['group'] = triple[2];
         } else if (triple[1] === '<http://schema.org/name>') {
           nodes[sourceIndex]['displayName'] = triple[2].replace(/&nbsp;/g, ' ');
+        } else if (triple[1] === '<http://schema.org/url>') {
+          nodes[sourceIndex]['properties'][triple[1]] = triple[2].slice(1, -1);
         } else if (triple[2][0] === '"') {
-          if (!nodes[sourceIndex]['properties']) {
-            nodes[sourceIndex]['properties'] = {}
-          }
           nodes[sourceIndex]['properties'][triple[1]] = triple[2].replace(/&nbsp;/g, ' ');
         } else {
             // Do not draw values
@@ -192,6 +192,7 @@ var renderGraph = function(graph, parentId) {
             if (targetIndex === undefined) {
               var node2 = {
                 'name': triple[2],
+                'properties': {}
               }
               targetIndex = nodes.push(node2) - 1;
               nodeIndexes[node2.name] = targetIndex;

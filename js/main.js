@@ -12,8 +12,6 @@ $(document).ready(function(){
 
     var data = editor.getValue();
 
-
-
     $.ajax({
       type: "POST",
       url: url,
@@ -26,8 +24,6 @@ $(document).ready(function(){
     });
 
   });
-
-
 
   $('#fetch').click(function() {
     var url = $('#provider-url').val();
@@ -49,20 +45,15 @@ $(document).ready(function(){
         $('#graph').html('');
         renderGraph(graph, '#graph');
       })
-
-
-
-
-
-
-
-
 });
 
 
 
 
 var actSbx = {};
+
+actSbx.PROXY_URL = location.origin + '/proxy';
+
 
 actSbx.Google = function() {
   this.url = null;
@@ -126,7 +117,8 @@ actSbx.Google.prototype.displayEntities = function(entities) {
 
 actSbx.Google.supportedOperationProperties = [
   'http://schema.org/operation',
-  'http://schema.org/reservations'
+  'http://schema.org/reservations',
+  'http://schema.org/orders'
 ];
 
 actSbx.Google.prototype.renderSnippet = function(el, entity) {
@@ -139,31 +131,33 @@ actSbx.Google.prototype.renderSnippet = function(el, entity) {
   var output = Mustache.render(actSbx.Google.snippetTpl, view);
   el.append($(output))
 
-  var operations = [];
 
-  var operation = entity['http://schema.org/operation'];
-
-  if (operation) {
-    var actionWidgetClass = actSbx.actionTypeToWidgetMap[operation['@type']];
-    if (actionWidgetClass) {
-      var widget = new actionWidgetClass(operation);
-      widget.render($('.action-widget'));
-    } else {
-      if ($('#validation-errors').text()) {
-        $('#validation-errors').append($('<br>'));
-      }
-      $('#validation-errors').append('Action ' + operation['@type'] + ' not implemented')
+  $.each(actSbx.Google.supportedOperationProperties, function(i, property) {
+    var operations;
+    if (property === 'http://schema.org/operation') {
+      operations = entity['http://schema.org/operation'] || [];
+    } else if (entity[property]) {
+      operations = entity[property]['http://schema.org/operation'] || [];
+    }
+    if (operations && !$.isArray(operations)) {
+        operations = [operations]
     }
 
-  }
-
-  $.each(actSbx.Google.supportedOperationProperties, function(property) {
-    if (entity[property]) {
-      if (entity[property]) {
-
+    $.each(operations, function(j, operation) {
+      console.log('operation')
+      console.log(operation)
+      var actionWidgetClass = actSbx.actionTypeToWidgetMap[operation['@type']];
+      if (actionWidgetClass) {
+        var widget = new actionWidgetClass(operation);
+        widget.render($('.action-widget'));
+      } else {
+        if ($('#validation-errors').text()) {
+          $('#validation-errors').append($('<br>'));
+        }
+        $('#validation-errors').append('Action ' + operation['@type'] + ' not implemented')
       }
 
-    }
+    });
   })
 
 
@@ -196,34 +190,14 @@ actSbx.ActionWidget.prototype.render = function(parent) {
 
 
 
-actSbx.ActionWidget.prototype.callback = function(e) {
-  //var el = $('<div class="result"></div>');
-  var el = this.log_.find('.result').last();
-  if (e.status !== 200) {
-    el.append($('<p><span class="text-danger">Server error</span></p> '));
-    return;
-  }
-  var response = JSON.parse(e.responseText)
-  this.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
-  if (response.errors && response.errors.length) {
 
-    el.append($('<p><span class="text-danger">Request malformed: ' +
-      response.errors.join('\n') + '</span></p> '));
-  }
 
-  if (response.warnings && response.warnings.length) {
-    el.append($('<p><span class="text-warning">Warning: ' +
-      response.warnings.join('\n') + '</span></p> '));
-  }
 
-  if (response.result) {
-    if (response.result.code === '200 OK') {
-      this.button_.text('Rated sucessfully!').addClass('btn-success').removeClass('btn-danger');
-    }
-    el.append($('<p><span class="status ' + response.result.code + '">' +
-        response.result.code + '</span> ' + response.result.url +
-        ' <span class="params">' + (response.result.params || '') + '</span></p>' +
-        '<p class="debug">Debug: ' + response.result.debug+ '</p>'));
+actSbx.ActionWidget.prototype.callback = function(success) {
+  if (success) {
+    this.button_.text('Rated sucessfully!').addClass('btn-success').removeClass('btn-danger');
+  } else {
+    this.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
   }
 }
 
@@ -246,28 +220,19 @@ actSbx.RateActionWidget.prototype.launch = function() {
     self.popup_.remove();
     return false;
   });
+
+  this.handler = new actSbx.HttpHandler(this.url_);
+
   this.popup_.find('select').change( function() {
     var el = $('<div class="result"></div>');
     self.log_.append(el);
 
-    el.append($('<p class="debug">Sending request to ' + self.url_ + ' ...</p> '));
-
-    var config = {
-      type: 'POST',
-      data: JSON.stringify({
-        url: self.url_,
-        params: {'value': $(this).val()}
-      }),
-      //processData: false,
-      contentType: 'application/json; charset=utf-8',
-      complete: function(e) {
-        self.callback(e)
-        self.popup_.remove();
-      }
+    var callback = function(e) {
+      self.callback(e)
+      self.popup_.remove();
     }
-    // What is the name of the param?
-    // What about multiple ratings?
-    $.ajax(location.origin + '/proxy', config);
+
+    self.handler.trigger({'value': $(this).val()}, el, callback);
     self.popup_.remove();
     return false;
   });
@@ -276,10 +241,68 @@ actSbx.RateActionWidget.prototype.launch = function() {
 
 
 actSbx.actionTypeToWidgetMap = {
-  'http://schema.org/ReviewAction': actSbx.RateActionWidget
+  'http://schema.org/ReviewAction': actSbx.RateActionWidget,
+  'http://schema.org/QuoteAction': actSbx.RateActionWidget
+};
+
+
+actSbx.HttpHandler = function(url) {
+  this.url_ = url;
+};
+
+actSbx.HttpHandler.prototype.trigger = function(params, resultBox, callback) {
+
+  resultBox.append($('<p class="debug">Sending request to ' + this.url_ + ' ...</p> '));
+
+  var self = this;
+
+  var config = {
+    type: 'POST',
+    data: JSON.stringify({
+      url: this.url_,
+      params: params
+    }),
+    //processData: false,
+    contentType: 'application/json; charset=utf-8',
+    complete: function(e) {
+      var success = self.callback(resultBox, e);
+      callback(success);
+    }
+  }
+  // What is the name of the param?
+  // What about multiple ratings?
+  $.ajax(actSbx.PROXY_URL, config);
 };
 
 
 
+actSbx.HttpHandler.prototype.callback = function(el, e) {
+  var success = false;
+  if (e.status !== 200) {
+    el.append($('<p><span class="text-danger">Server error</span></p> '));
+    return success;
+  }
+  var response = JSON.parse(e.responseText)
+  //this.button_.text('Action unsuccessful:(').addClass('btn-danger').removeClass('btn-success');
+  if (response.errors && response.errors.length) {
+    el.append($('<p><span class="text-danger">Request malformed: ' +
+      response.errors.join('\n') + '</span></p> '));
+  }
 
+  if (response.warnings && response.warnings.length) {
+    el.append($('<p><span class="text-warning">Warning: ' +
+      response.warnings.join('\n') + '</span></p> '));
+  }
 
+  if (response.result) {
+    if (response.result.code === '200 OK') {
+      success = true;
+      //this.button_.text('Rated sucessfully!').addClass('btn-success').removeClass('btn-danger');
+    }
+    el.append($('<p><span class="status ' + response.result.code + '">' +
+        response.result.code + '</span> ' + response.result.url +
+        ' <span class="params">' + (response.result.params || '') + '</span></p>' +
+        '<p class="debug">Debug: ' + response.result.debug+ '</p>'));
+  }
+  return success;
+}
