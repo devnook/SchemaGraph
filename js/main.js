@@ -46,7 +46,7 @@ $(document).ready(function(){
         var graph = JSON.parse($('pre#log').text().trim());
 
 
-
+        $('#graph').html('');
         renderGraph(graph, '#graph');
       })
 
@@ -180,7 +180,7 @@ actSbx.ActionWidget = function(operation) {
   this.log_ = null;
   this.method_ = operation['http://schema.org/actionHandler']['http://schema.org/httpMethod'];
   this.name_ = operation['http://schema.org/actionHandler']['http://schema.org/name'];
-  this.url_ = operation['http://schema.org/actionHandler']['http://schema.org/url'];
+  this.url_ = operation['http://schema.org/actionHandler']['http://schema.org/url']['@id'];
 };
 
 

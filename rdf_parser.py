@@ -34,7 +34,7 @@ def parse_document(url):
 
 
 
-    graph, entities, warnings, errors = process_graph(g)
+    graph, entities, warnings, errors = process_graph(g, url)
 
 
     return graph, entities, warnings, errors + parse_errors
@@ -49,6 +49,21 @@ def parse_string(docString):
 def process_dom(doc, location):
   g = rdflib.Graph()
   errors = []
+
+  # This is a hack to force rewriting relative url to full urls.
+  # TODO(ewag): Rethink whole issue of custom context resolution.
+  context = {
+    "@vocab": "http://schema.org/",
+    "http://schema.org/url": {
+      "@type": "@id"
+    },
+    "url": {
+      "@type": "@id"
+    }
+  }
+  if location:
+    context["@base"] = location
+
   for el in doc.getElementsByTagName("script"):
     print 'el'
     if el.getAttribute('type') == 'application/ld+json':
@@ -56,7 +71,11 @@ def process_dom(doc, location):
       if el.firstChild:
         #print el.firstChild.data.strip()
         try:
-          g.parse(data=el.firstChild.data.strip(), location=location, format='json-ld')
+          doc = json.loads(el.firstChild.data.strip())
+          # Force url rewrites
+          expanded = jsonld.expand(jsonld.compact(doc, context))
+          data = json.dumps(expanded)
+          g.parse(data=data, base=location, format='json-ld')
         except ValueError as e:
           # log here
           errors.append(str(e))
@@ -116,6 +135,8 @@ def main():
   print(g1.serialize(format='json-ld', auto_compact=True, indent=4))
 
   doc = json.loads(g1.serialize(format='json-ld', auto_compact=True, indent=4))
+
+  compacted = jsonld.compact(doc, context)
   entities = []
 
   for supported_type in SUPPORTED_TYPES:
@@ -138,15 +159,12 @@ if __name__ == '__main__':
    main()
 
 
-def process_graph(g):
+def process_graph(g, url=None):
   #warnings, errors = validator.validate(g)
   warnings = []
   errors = []
   entities = []
 
-  context = {
-    "@vocab": "http://schema.org/"
-  }
   graph = g.serialize(format='json-ld', auto_compact=True, indent=4)
   doc = json.loads(graph)
 
@@ -159,7 +177,8 @@ def process_graph(g):
     entities.extend(framed['@graph'])
 
   pp = pprint.PrettyPrinter(indent=2)
-  pp.pprint(entities)
+  pp.pprint(doc)
+
 
   return doc, entities, warnings, errors
 
