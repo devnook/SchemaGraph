@@ -23,23 +23,6 @@ import json
 import logging
 
 
-def prepare_query(validation_rule):
-  return (rdflib.plugins.sparql.prepareQuery(validation_rule[0]),
-          validation_rule[1])
-
-
-# Expect this to be supplied externally.
-VALIDATION_QUERIES = map(prepare_query, [
-    ('SELECT ?s WHERE { ?s <http://schema.org/operation> ?o}', 'No operation present'),
-])
-
-
-def validate(g):
-  errors = set()
-  for q in VALIDATION_QUERIES:
-    if len(g.query(q[0])) < 1:
-      errors.add(q[1])
-  return  errors
 
 def parse_document(url):
   document = urlopen(url)
@@ -87,9 +70,9 @@ def process_dom(doc, location):
       if el.firstChild:
         #print el.firstChild.data.strip()
         try:
-          doc = json.loads(el.firstChild.data.strip())
+          doc_json = json.loads(el.firstChild.data.strip())
           # Force url rewrites
-          expanded = jsonld.expand(jsonld.compact(doc, context))
+          expanded = jsonld.expand(jsonld.compact(doc_json, context))
           data = json.dumps(expanded)
           g.parse(data=data, base=location, format='json-ld')
         except ValueError as e:
@@ -151,7 +134,7 @@ if __name__ == '__main__':
 
 
 def process_graph(g, url=None):
-  errors = validate(g)
+  errors = validator.validate(g)
   warnings = []
   entities = []
 
