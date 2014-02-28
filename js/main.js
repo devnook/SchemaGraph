@@ -58,7 +58,7 @@ actions.processResponse = function(response) {
   $('#graph').html('');
 
   //this.renderGraph(responseObj.graph);
-  $('#validation-errors').text('').text(responseObj['errors'])
+  $('#validation-errors').html('').html(responseObj['errors'].join('<br/>'))
   $('#entities').html('');
   if (responseObj['entities'].length) {
     actions.displayEntities(responseObj['entities'])
@@ -180,14 +180,14 @@ actions.ReviewActionWidget.prototype.launch = function() {
     return false;
   }, this));
 
-  this.popup_.find('select').change($.proxy(function() {
+  this.popup_.find('select').change($.proxy(function(e) {
     var el = $('<div class="result"></div>');
     this.log_.append(el);
-    var callback = function(e) {
+    var callback = $.proxy(function(e) {
       this.updateWidgetState(e)
       this.popup_.remove();
-    }
-    this.handler_.trigger({'value': $(this).val()}, el, callback);
+    }, this);
+    this.handler_.trigger({'value': $(e.target).val()}, el, callback);
     this.popup_.remove();
     return false;
   }, this));

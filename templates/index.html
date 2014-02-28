@@ -22,6 +22,7 @@
         <ul class="nav nav-pills">
           <li class="active"><a href="#html-input-tab" data-toggle="tab">HTML</a></li>
           <li><a href="#url-input-tab" data-toggle="tab">URL</a></li>
+          <li><a href="#feed-input-tab" data-toggle="tab">Merchant Feed</a></li>
         </ul>
 
         <!-- Tab panes -->
@@ -32,7 +33,11 @@
           </div>
           <div class="tab-pane" id="url-input-tab">
             <textarea rows="4" id="provider-url" placeholder="Resource page url">http://googleknowledge.github.io/ActionsSamples/restaurant.html</textarea>
-            <button id="fetch" class="btn btn-primary">crawl</button>
+            <button id="fetch" class="btn btn-primary">Crawl</button>
+          </div>
+          <div class="tab-pane" id="feed-input-tab">
+            <textarea rows="4" id="feed-content" placeholder="RSS feed content"></textarea>
+            <button id="parse-feed" class="btn btn-primary">Parse</button>
           </div>
         </div>
       </div>
@@ -40,7 +45,7 @@
 
     <div class="row">
       <div class="col-md-12">
-        <p class="alert alert-warning" id="validation-errors"></p>
+        <p class="alert alert-danger" id="validation-errors"></p>
         <div id="entities-section" style="display: none;">
           <a class="" data-toggle="collapse" data-target="#entities-list">
             Recognized actions

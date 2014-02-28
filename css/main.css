@@ -105,12 +105,11 @@ padding: 0 10px;
 
 .result {
 border-top: 5px solid #eee;
-margin: 0 -10px;
 padding: 10px 10px 0 10px;
 }
 
 .action-link {
-  margin-bottom: 10px;
+  margin: 0 10px 10px 0;
 }
 
 .debug {
@@ -148,4 +147,9 @@ circle+text {
 .graph-details {
   float: left;
   position: absolute;
+}
+
+.action-link {
+  -webkit-transition: background-color 2s, border-color 2s, color: 2s;
+  transition: background-color 2s, border-color 2s, color: 2s;
 }
