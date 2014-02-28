@@ -47,7 +47,6 @@ def parse_document(url):
   with closing(document) as f:
     doc = html5lib.parse(f, treebuilder="dom",
                          encoding=f.info().getparam("charset"))
-    logging.info(doc)
     g, parse_errors = process_dom(doc, url)
     graph, entities, warnings, errors = process_graph(g, url)
 
@@ -83,7 +82,6 @@ def process_dom(doc, location):
     context["@base"] = location
 
   for el in doc.getElementsByTagName("script"):
-    print 'el'
     if el.getAttribute('type') == 'application/ld+json':
 
       if el.firstChild:
@@ -97,6 +95,11 @@ def process_dom(doc, location):
         except ValueError as e:
           # log here
           errors.append(str(e))
+
+  for el in doc.getElementsByTagName('body'):
+    data = el.toxml()
+    g.parse(data=data, format='microdata')
+
 
 
 
@@ -128,7 +131,17 @@ def main():
     #print s, p, o
     pass
 
-  print validate(g1)
+  doc = """
+    <span itemscope itemtype="http://schema.org/Restaurant" itemid="http://www.urbanspoon.com/r/1/5609/restaurant/Ballard/Rays-Boathouse-Seattle">
+    <span itemprop="operation" itemscope itemtype="http://schema.org/ViewAction">
+      <span itemprop="actionHandler" itemscope itemtype="http://schema.org/WindowsActionHandler">
+        <meta itemprop="application" content="msApplication://78901">
+        <meta itemprop="minVersion" content="2.2.0.12">
+      </span>
+    </span>
+  </span>"""
+  g2 = rdflib.Graph()
+  g2.parse(data=doc.strip(), format='microdata')
 
 
 import pprint

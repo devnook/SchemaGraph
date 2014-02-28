@@ -61,9 +61,9 @@ actions.processResponse = function(response) {
   $('#validation-errors').html('').html(responseObj['errors'].join('<br/>'))
   $('#entities').html('');
   if (responseObj['entities'].length) {
-    actions.displayEntities(responseObj['entities'])
     $('#raw-results').show();
     $('#log').text(JSON.stringify(responseObj.graph, undefined, 2));
+    actions.displayEntities(responseObj['entities'])
   }
 };
 
@@ -87,7 +87,7 @@ actions.renderSnippet = function(el, entity) {
 
 
   $.each(actions.supportedOperationProperties, function(i, property) {
-    var operations;
+    var operations = [];
     if (property === 'http://schema.org/operation') {
       operations = entity['http://schema.org/operation'] || [];
     } else if (entity[property]) {
@@ -96,6 +96,8 @@ actions.renderSnippet = function(el, entity) {
     if (operations && !$.isArray(operations)) {
         operations = [operations]
     }
+
+    console.log(operations)
 
     $.each(operations, function(j, operation) {
       //console.log('operation')
