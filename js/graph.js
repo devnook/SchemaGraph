@@ -36,7 +36,7 @@ d3.selection.prototype.moveToFront = function() {
   });
 };
 
-var renderGraph = function(graph, parentId) {
+var renderGraph = function(triples, parentId) {
 
   var detailsWrapper = d3.select(parentId).append("div");
     detailsWrapper.append('h4')
@@ -142,81 +142,77 @@ var renderGraph = function(graph, parentId) {
 
 
 
-    };
+  }; // end process
 
-    var nodes = [];
-    var links = [];
+  var nodes = [];
+  var links = [];
+  var nodeIndexes = {};
 
-    var nodeIndexes = {};
+  $.each(triples, function(i, triple) {
+    //console.log(i)
+    console.log(triple)
 
-    jsonld.toRDF(graph, {format: 'application/nquads'}, function(err, nquads) {
-
-      console.log(nquads)
-
-      if (!nquads) {
-        console.log(err)
-        return;
+    var sourceIndex = nodeIndexes[triple[0]];
+    if (sourceIndex === undefined) {
+      var node = {
+        'name': triple[0],
+        'properties': {}
       }
-      nquads = nquads.split('\n')
-
-      console.log(nquads)
-
-      for (var i = 0, nquad; nquad = nquads[i]; i++) {
-        var triple = nquad.replace(/\"(.)*\"/g, function(match) {
-          return match.replace(/\s/g, '&nbsp;')
-        }).split(' ');
-
-        var sourceIndex = nodeIndexes[triple[0]];
-        if (sourceIndex === undefined) {
-          var node = {
-            'name': triple[0],
-            'properties': {}
-          }
-          sourceIndex = nodes.push(node) - 1;
-          nodeIndexes[node.name] = sourceIndex;
-        }
-
-        // solve special cases first
-        if (triple[1] === '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
-          nodes[sourceIndex]['group'] = triple[2];
-        } else if (triple[1] === '<http://schema.org/name>') {
-          nodes[sourceIndex]['displayName'] = triple[2].replace(/&nbsp;/g, ' ');
-        } else if (triple[1] === '<http://schema.org/url>') {
-          nodes[sourceIndex]['properties'][triple[1]] = triple[2].slice(1, -1);
-        } else if (triple[2][0] === '"') {
-          nodes[sourceIndex]['properties'][triple[1]] = triple[2].replace(/&nbsp;/g, ' ');
-        } else {
-            // Do not draw values
-
-            var targetIndex = nodeIndexes[triple[2]];
-            if (targetIndex === undefined) {
-              var node2 = {
-                'name': triple[2],
-                'properties': {}
-              }
-              targetIndex = nodes.push(node2) - 1;
-              nodeIndexes[node2.name] = targetIndex;
-            }
-            var link = {
-              "source": sourceIndex,
-              "target": targetIndex,
-              "value": 5
-            }
-            links.push(link)
-
-        }
+      sourceIndex = nodes.push(node) - 1;
+      nodeIndexes[node.name] = sourceIndex;
+    }
 
 
 
+    // Do not draw values
+
+    var targetIndex = nodeIndexes[triple[2]];
+    if (targetIndex === undefined) {
+      var node2 = {
+        'name': triple[2],
+        'properties': {}
       }
+      targetIndex = nodes.push(node2) - 1;
+      nodeIndexes[node2.name] = targetIndex;
+    }
+    var link = {
+      "source": sourceIndex,
+      "target": targetIndex,
+      "value": 5
+    }
+    links.push(link)
+  });
 
-      //console.log(nodes)
-      //console.log(links)
-      var g = {
-        nodes: nodes,
-        links: links
-      }
-      process(null, g)
-    });
+
+
+  //console.log(nodes)
+  //console.log(links)
+  var g = {
+    nodes: nodes,
+    links: links
+  }
+  process(null, g)
+
 
 };
+
+
+
+var processTriples = function(node) {
+
+   var queue = [];
+   queue.push({ current: node, parent: null});
+
+   while (queue.length>0) {
+      var item = queue.shift();
+      var current = item.current;
+      console.log(item)
+
+
+      for (var child = current.lastChild; child; child = child.previousSibling) {
+         if (child.nodeType==Node.ELEMENT_NODE) {
+            queue.unshift({ current: child, parent: current});
+         }
+      }
+   }
+}
