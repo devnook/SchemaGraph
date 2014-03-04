@@ -20,8 +20,8 @@ $(document).ready(function(){
 
   // Enable buttons
   $('#parse').click(function() {
-    var node = $('<div></div>').html(editor.getValue())
-    //$('body').append(node)
+    var node = $('<div></div>').html(editor.getValue())[0]
+    $('body').append(node)
     $('#graph').html('')
 
     var processor = GreenTurtle.implementation.processors["microdata"];
