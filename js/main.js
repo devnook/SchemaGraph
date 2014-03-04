@@ -15,20 +15,21 @@ $(document).ready(function(){
   });
   editor.setValue('<span itemscope itemtype="http://schema.org/Restaurant" itemid="http://www.urbanspoon.com/r/1/5609/restaurant/Ballard/Rays-Boathouse-Seattle">\n' +
   '<span itemprop="operation" itemscope itemtype="http://schema.org/ViewAction">\n' +
+    '<span itemprop="handler" itemtype="http://schema.org/Handler">AAA</span>\n' +
     '</span></span>')
   editor.setSize('100%', '150px')
 
   // Enable buttons
   $('#parse').click(function() {
-    var node = $('<div></div>').html(editor.getValue())[0]
+    var node = $('<div style="display:none;"></div>').html(editor.getValue());
+    node.find('script').remove();
+    node.find('link').remove();
     $('body').append(node)
+
     $('#graph').html('')
 
     var processor = GreenTurtle.implementation.processors["microdata"];
-    var graph = processor.processNode(node);
-    console.log(node.data)
-    //console.log(node.data.getValues())
-    console.log(graph)
+    var graph = processor.processNode(node[0]);
     renderGraph(graph.triples, '#graph')
   });
 });

@@ -56,7 +56,7 @@ var renderGraph = function(triples, parentId) {
 
   var force = d3.layout.force()
   .charge(-400)
-  .linkDistance(60)
+  .linkDistance(100)
   .size([width, height]);
 
   var svg = d3.select(parentId).append("svg")
@@ -69,17 +69,22 @@ var renderGraph = function(triples, parentId) {
     .links(graph.links)
     .start();
 
-    var glinks = svg.selectAll(".link")
+    var glinks = svg.selectAll("g.link")
     .data(graph.links)
-    .enter().append("line")
+    .enter().append('g').classed('glink', true);
+
+    var line = glinks.append("line")
     .attr("class", "link")
-    .classed('glink', true)
-    .style("stroke-width", function(d) { return Math.sqrt(d.value); });
 
-    var label = glinks.append("text")
-      .text('aaa')
+    .style("stroke-width", 2);
 
-
+    var linktext = glinks
+     .append("text")
+     .attr("class", "label")
+     .attr("dx", 1)
+     .attr("dy", ".35em")
+     .attr("text-anchor", "middle")
+     .text(function(d) { return d.value });
 
     var gnodes = svg.selectAll("g.node")
     .data(graph.nodes)
@@ -99,27 +104,20 @@ var renderGraph = function(triples, parentId) {
       var labels = gnodes.append("text")
       .attr('class', 'label')
       .text(function(d) {
-        /*
-        if (d.name.indexOf('<') === 0) {
-          d.name = d.name.replace('<http://', '').replace('>', '')
-          d.name = d.name.substring(d.name.indexOf('/'));
+        var nodeType;
+        if (d.type) {
+          nodeType = d.type.toString().replace('http://schema.org/', '') + ': '
         } else {
-          d.name = d.name.replace(/\"/g, '')
-        }*/
-        var group;
-        if (d.group) {
-          group = d.group.toString().replace('<http://schema.org/', '').replace('>', '') + ': '
-        } else {
-          group = '? : '
+          nodeType = '? : '
         }
-        return group + (d.displayName || d.name);
+        return nodeType + (d.displayName || d.name);
       });
 
       node.append("title")
       .text(function(d) { return d.name; });
 
       force.on("tick", function() {
-        glinks.attr("x1", function(d) { return d.source.x; })
+        line.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
@@ -131,9 +129,11 @@ var renderGraph = function(triples, parentId) {
     gnodes.attr("transform", function(d) {
       return 'translate(' + [d.x, d.y] + ')';
     });
-    label.attr("transform", function(d) {
-      return 'translate(' + [d.x, d.y] + ')';
-    });
+
+    linktext.attr("transform", function(d) {
+      return "translate(" + (d.source.x + d.target.x) / 2 + ","
+      + (d.source.y + d.target.y) / 2 + ")"; });
+
 
     gnodes.on("mouseover",function(d){
       var sel = d3.select(this);
@@ -141,6 +141,12 @@ var renderGraph = function(triples, parentId) {
       $.each(sel.data()[0].properties, function(k, v) {
         details.append('li').text(k + ': ' + v)
       })
+    })
+
+    linktext.on("mouseover",function(d){
+      var sel = d3.select(this);
+      sel.moveToFront();
+
     })
 
     gnodes.on("mouseout",function(d){
@@ -157,9 +163,6 @@ var renderGraph = function(triples, parentId) {
   var nodeIndexes = {};
 
   $.each(triples, function(i, triple) {
-    //console.log(i)
-    console.log(triple)
-
     var sourceIndex = nodeIndexes[triple[0]];
     if (sourceIndex === undefined) {
       var node = {
@@ -170,25 +173,26 @@ var renderGraph = function(triples, parentId) {
       nodeIndexes[node.name] = sourceIndex;
     }
 
-
-
     // Do not draw values
-
-    var targetIndex = nodeIndexes[triple[2]];
-    if (targetIndex === undefined) {
-      var node2 = {
-        'name': triple[2],
-        'properties': {}
+    if (triple[1] === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+      nodes[sourceIndex]['type'] = triple[2];
+    } else {
+      var targetIndex = nodeIndexes[triple[2]];
+      if (targetIndex === undefined) {
+        var node2 = {
+          'name': triple[2],
+          'properties': {}
+        }
+        targetIndex = nodes.push(node2) - 1;
+        nodeIndexes[node2.name] = targetIndex;
       }
-      targetIndex = nodes.push(node2) - 1;
-      nodeIndexes[node2.name] = targetIndex;
+      var link = {
+        "source": sourceIndex,
+        "target": targetIndex,
+        "value": triple[1]
+      }
+      links.push(link)
     }
-    var link = {
-      "source": sourceIndex,
-      "target": targetIndex,
-      "value": 5
-    }
-    links.push(link)
   });
 
 
@@ -206,21 +210,3 @@ var renderGraph = function(triples, parentId) {
 
 
 
-var processTriples = function(node) {
-
-   var queue = [];
-   queue.push({ current: node, parent: null});
-
-   while (queue.length>0) {
-      var item = queue.shift();
-      var current = item.current;
-      console.log(item)
-
-
-      for (var child = current.lastChild; child; child = child.previousSibling) {
-         if (child.nodeType==Node.ELEMENT_NODE) {
-            queue.unshift({ current: child, parent: current});
-         }
-      }
-   }
-}

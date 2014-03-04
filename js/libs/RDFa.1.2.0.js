@@ -2930,7 +2930,7 @@ MicrodataProcessor.prototype.process = function(node) {
    queue.push({ current: node, context: this.push(null,null) });
    while (queue.length>0) {
       var item = queue.shift();
-      console.log(item)
+      //console.log(item)
       var current = item.current;
       var context = item.context;
       var base = this.createBaseURI(current.baseURI);
@@ -2955,7 +2955,16 @@ MicrodataProcessor.prototype.process = function(node) {
             // Only make a triple if there is both a parent subject and new subject
             if (context.parent.subject && subject) {
                // make a triple with the new subject as the object
-               this.addTriple(current, context.subject, prop, { type: MicrodataProcessor.objectURI, value: subject});
+
+               for (var i=0; i<tokens.length; i++) {
+                  var prop = tokens[i].length>0 ? this.getProperty(tokens[i],vocabulary) : null;
+                  if (!prop) {
+                     continue;
+                  }
+                  this.addTriple(current, context.subject, prop, { type: MicrodataProcessor.objectURI, value: subject});
+
+               }
+
             }
          } else if (vocabulary) {
             if (!subject) {
