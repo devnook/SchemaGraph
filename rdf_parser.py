@@ -95,20 +95,47 @@ SUPPORTED_TYPES = [
 
 def main():
 
-  json_ser = '{"@context": { "@vocab": "http://schema.org/" },"@type": "Restaurant","@id": "http://code.sgo.to/restaurants/123","name": "Sams Pizza Place","cuisine": "pizzeria","orders": {"@type": "ItemList","@id": "http://code.sgo.to/restaurants/123/orders"},"reservations": {"@type": "ItemList","@id": "http://code.sgo.to/restaurants/123/reservations"}}'
+  json_ser = '''{
+    "@context": {
+      "@vocab": "http://schema.org/"
+    },
+    "@type": "Restaurant",
+    "@id": "http://code.sgo.to/restaurants/123",
+    "name": "Sams Pizza Place",
+    "cuisine": "pizzeria",
+    "orders": {
+      "@type": "ItemList","@id": "http://code.sgo.to/restaurants/123/orders"
+    },
+    "reservations": {
+      "@type": "ItemList",
+      "@id": "http://code.sgo.to/restaurants/123/reservations"
+    }}'''
   json_ser2 = '{"@context": { "@vocab": "http://schema.org/" },"@type": "Restaurant", "@id": "http://code.sgo.to/restaurants/1232","name": "Sams Pizza Place 2"}'
 
-  json_res = '{"@type": "ItemList","@id": "http://code.sgo.to/restaurants/123/reservations","http://schema.org/operation": {"@type": "http://schema.org/SearchAction","http://schema.org/actionStatus": "http://schema.org/proposed","http://schema.org/actionHandler": [{"@type": "http://schema.org/HttpHandler","name": "object","httpMethod": "post"}]}}'
+  json_res = '''{
+    "@type": "ItemList",
+    "@id": "http://code.sgo.to/restaurants/123/reservations",
+    "http://schema.org/operation": {
+      "@type": "http://schema.org/SearchAction",
+      "http://schema.org/actionStatus": "http://schema.org/proposed",
+      "http://schema.org/actionHandler": [{
+        "@type": "http://schema.org/HttpHandler",
+        "url": "http://somehandler.com",
+        "name": "object",
+        "httpMethod": "post"
+      }]
+    }
+  }'''
   json_res2 = '{"@type": "http://schema.org/Movie","@id": "http://code.sgo.to/movie/123","http://schema.org/operation": {"@type": "http://schema.org/SearchAction","http://schema.org/actionStatus": "http://schema.org/proposed","http://schema.org/actionHandler": [{"@type": "http://schema.org/HttpHandler","name": "object", "http://schema.org/url": "http://example.com", "httpMethod": "post"}]}}'
 
 
   obj = json.loads(json_ser)
   #print obj
   g1 = rdflib.ConjunctiveGraph()
-  #g1.parse(data=json_ser.strip(), format='json-ld')
+  g1.parse(data=json_ser.strip(), format='json-ld')
   #g1.parse(data=json_ser2.strip(), format='json-ld')
-  #g1.parse(data=json_res.strip(), format='json-ld')
-  g1.parse(data=json_res2.strip(), format='json-ld')
+  g1.parse(data=json_res.strip(), format='json-ld')
+  #g1.parse(data=json_res2.strip(), format='json-ld')
 
   for s, p, o in g1:
     print s, p, o
