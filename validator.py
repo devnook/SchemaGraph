@@ -21,3 +21,17 @@ def validate(g):
       errors.add(q[1])
   return  errors
 
+def runquery(g):
+  q = """
+  SELECT ?s ?o
+  WHERE {
+    ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/HttpHandler> .
+    NOT EXISTS { ?s <http://schema.org/url> ?o . }
+  }
+  """
+  print 'rows'
+  for row in g.query(q):
+    print 'rows'
+    print row
+
+

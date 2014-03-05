@@ -83,8 +83,8 @@ def process_dom(doc, location):
     data = el.toxml()
     g.parse(data=data, format='microdata')
 
-
-
+  for s, p, o in g:
+    print s, p, o
 
   return g, errors
 
@@ -99,20 +99,22 @@ def main():
   json_ser2 = '{"@context": { "@vocab": "http://schema.org/" },"@type": "Restaurant", "@id": "http://code.sgo.to/restaurants/1232","name": "Sams Pizza Place 2"}'
 
   json_res = '{"@type": "ItemList","@id": "http://code.sgo.to/restaurants/123/reservations","http://schema.org/operation": {"@type": "http://schema.org/SearchAction","http://schema.org/actionStatus": "http://schema.org/proposed","http://schema.org/actionHandler": [{"@type": "http://schema.org/HttpHandler","name": "object","httpMethod": "post"}]}}'
-  json_res2 = '{"@type": "http://schema.org/Movie","@id": "http://code.sgo.to/movie/123","http://schema.org/operation": {"@type": "http://schema.org/SearchAction","http://schema.org/actionStatus": "http://schema.org/proposed","http://schema.org/actionHandler": [{"@type": "http://schema.org/HttpHandler","name": "object","httpMethod": "post"}]}}'
+  json_res2 = '{"@type": "http://schema.org/Movie","@id": "http://code.sgo.to/movie/123","http://schema.org/operation": {"@type": "http://schema.org/SearchAction","http://schema.org/actionStatus": "http://schema.org/proposed","http://schema.org/actionHandler": [{"@type": "http://schema.org/HttpHandler","name": "object", "http://schema.org/url": "http://example.com", "httpMethod": "post"}]}}'
 
 
   obj = json.loads(json_ser)
   #print obj
   g1 = rdflib.ConjunctiveGraph()
-  g1.parse(data=json_ser.strip(), format='json-ld')
-  g1.parse(data=json_ser2.strip(), format='json-ld')
-  g1.parse(data=json_res.strip(), format='json-ld')
+  #g1.parse(data=json_ser.strip(), format='json-ld')
+  #g1.parse(data=json_ser2.strip(), format='json-ld')
+  #g1.parse(data=json_res.strip(), format='json-ld')
   g1.parse(data=json_res2.strip(), format='json-ld')
 
   for s, p, o in g1:
-    #print s, p, o
-    pass
+    print s, p, o
+    #pass
+
+  validator.runquery(g1)
 
   doc = """
     <span itemscope itemtype="http://schema.org/Restaurant" itemid="http://www.urbanspoon.com/r/1/5609/restaurant/Ballard/Rays-Boathouse-Seattle">
@@ -138,7 +140,7 @@ def process_graph(g, url=None):
   warnings = []
   entities = []
 
-  graph = g.serialize(format='json-ld', auto_compact=True, indent=4)
+  graph = g.serialize(format='json-ld', indent=4)
   doc = json.loads(graph)
 
   for supported_type in SUPPORTED_TYPES:
