@@ -21,20 +21,47 @@ import html5lib
 import json
 
 import logging
+import re
 
 
 
 def parse_document(url):
   document = urlopen(url)
   logging.info(url)
+
+  print dir(document)
+
+  print dir(document.headers)
+  print document.headers.getheader('Content-type')
+  print document.headers.typeheader
+
+
+
+  print re.findall(r"(?P<name>.*?): (?P<value>.*?)\r\n", str(document.headers))
+
+
   with closing(document) as f:
-    doc = html5lib.parse(f, treebuilder="dom",
-                         encoding=f.info().getparam("charset"))
-    g, parse_errors = process_dom(doc, url)
+    g = rdflib.Graph()
+    # This is a hack to force rewriting relative url to full urls.
+    # TODO(ewag): Rethink whole issue of custom context resolution.
+    context = {
+      "@vocab": "http://schema.org/",
+      "http://schema.org/url": {
+        "@type": "@id"
+      },
+      "url": {
+        "@type": "@id"
+      }
+    }
+    if document.headers.typeheader.split(';')[0] == 'application/json':
+      g, parse_errors = process_jsonld(g, f.read(), context, url)
+    else:
+      doc = html5lib.parse(f, treebuilder="dom",
+                           encoding=f.info().getparam("charset"))
+      g, parse_errors = process_dom(g, doc, context, url)
+
     graph, entities, warnings, errors = process_graph(g, url)
-
     errors.update(parse_errors)
-
     return graph, entities, warnings, list(errors)
 
 def parse_string(docString):
@@ -46,47 +73,38 @@ def parse_string(docString):
   return graph, entities, warnings, list(errors)
 
 
-def process_dom(doc, location):
-  g = rdflib.Graph()
+def process_dom(g, doc, context, location):
   errors = []
-
-  # This is a hack to force rewriting relative url to full urls.
-  # TODO(ewag): Rethink whole issue of custom context resolution.
-  context = {
-    "@vocab": "http://schema.org/",
-    "http://schema.org/url": {
-      "@type": "@id"
-    },
-    "url": {
-      "@type": "@id"
-    }
-  }
-  if location:
-    context["@base"] = location
-
   for el in doc.getElementsByTagName("script"):
     if el.getAttribute('type') == 'application/ld+json':
-
       if el.firstChild:
         #print el.firstChild.data.strip()
-        try:
-          doc_json = json.loads(el.firstChild.data.strip())
-          # Force url rewrites
-          expanded = jsonld.expand(jsonld.compact(doc_json, context))
-          data = json.dumps(expanded)
-          g.parse(data=data, base=location, format='json-ld')
-        except ValueError as e:
-          # log here
-          errors.append(str(e))
+        g, errors = process_jsonld(g, el.firstChild.data.strip(), context, location)
 
   for el in doc.getElementsByTagName('body'):
     data = el.toxml()
     g.parse(data=data, format='microdata')
+  return g, errors
 
-  for s, p, o in g:
-    print s, p, o
+
+def process_jsonld(g, json_str, context, location):
+  errors = []
+
+  if location:
+    context["@base"] = location
+
+  try:
+    doc_json = json.loads(json_str)
+    # Force url rewrites
+    expanded = jsonld.expand(jsonld.compact(doc_json, context))
+    data = json.dumps(expanded)
+    g.parse(data=data, base=location, format='json-ld')
+  except ValueError as e:
+    # log here
+    errors.append(str(e))
 
   return g, errors
+
 
 SUPPORTED_TYPES = [
   'http://schema.org/Restaurant',
