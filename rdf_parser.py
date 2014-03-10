@@ -24,35 +24,25 @@ import logging
 import re
 
 
+context = {
+  "@vocab": "http://schema.org/",
+  "http://schema.org/url": {
+    "@type": "@id"
+  },
+  "url": {
+    "@type": "@id"
+  }
+}
 
 def parse_document(url):
   document = urlopen(url)
   logging.info(url)
 
-  print dir(document)
-
-  print dir(document.headers)
-  print document.headers.getheader('Content-type')
-  print document.headers.typeheader
-
-
-
-  print re.findall(r"(?P<name>.*?): (?P<value>.*?)\r\n", str(document.headers))
-
-
   with closing(document) as f:
     g = rdflib.Graph()
     # This is a hack to force rewriting relative url to full urls.
     # TODO(ewag): Rethink whole issue of custom context resolution.
-    context = {
-      "@vocab": "http://schema.org/",
-      "http://schema.org/url": {
-        "@type": "@id"
-      },
-      "url": {
-        "@type": "@id"
-      }
-    }
+
     if document.headers.typeheader.split(';')[0] == 'application/json':
       g, parse_errors = process_jsonld(g, f.read(), context, url)
     else:
@@ -65,10 +55,16 @@ def parse_document(url):
     return graph, entities, warnings, list(errors)
 
 def parse_string(docString):
+  g = rdflib.Graph()
   doc = html5lib.parse(docString, treebuilder="dom")
-  g, parse_errors = process_dom(doc, None)
+  g, parse_errors = process_dom(g, doc, context, None)
   graph, entities, warnings, errors = process_graph(g)
   errors.update(parse_errors)
+
+  print 'e'
+  for s, p, o in g:
+    print 'aaa'
+    print s, p, o
 
   return graph, entities, warnings, list(errors)
 

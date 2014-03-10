@@ -35,7 +35,7 @@ $(document).ready(function(){
   });
 
   $('#graph-render').on('click', function () {
-    var graph = JSON.parse($('pre#log').text().trim());
+    var graph = JSON.parse($('pre#graph-log').text().trim());
     $('#graph').html('');
     renderGraph(graph, '#graph');
   });
@@ -62,7 +62,8 @@ actions.processResponse = function(response) {
   $('#entities').html('');
   if (responseObj['entities'].length) {
     $('#raw-results').show();
-    $('#log').text(JSON.stringify(responseObj.graph, undefined, 2));
+    $('#entities-log').text(JSON.stringify(responseObj.entities, undefined, 2));
+    $('#graph-log').text(JSON.stringify(responseObj.graph, undefined, 2));
     actions.displayEntities(responseObj['entities'])
   }
 };
@@ -104,8 +105,18 @@ actions.renderSnippet = function(el, entity) {
       //console.log(operation)
       var actionWidgetClass = actions.actionTypeToWidgetMap[operation['@type']];
       if (actionWidgetClass) {
-        var widget = new actionWidgetClass(operation);
-        widget.render($('.action-widget'), $('.action-log'));
+        try {
+          var widget = new actionWidgetClass(operation);
+          widget.render($('.action-widget'), $('.action-log'));
+        } catch (e) {
+
+          var  msg = (e instanceof actions.ActionWidget.Exception) ?
+              e.message : 'Application error';
+          if ($('#validation-errors').text()) {
+            $('#validation-errors').append($('<br>'));
+          }
+          $('#validation-errors').append(msg);
+        }
       } else {
         if ($('#validation-errors').text()) {
           $('#validation-errors').append($('<br>'));
@@ -121,19 +132,24 @@ actions.renderSnippet = function(el, entity) {
 // Actions widget base class ***************************************************
 
 
-actions.ActionWidget = function(operation) {
-  this.operation_ = operation;
+actions.ActionWidget = function(name, handler) {
   this.button_ = null;
   this.log_ = null;
-
-  var handler = operation['http://schema.org/actionHandler'];
-  this.method_ = handler['http://schema.org/httpMethod'];
-  this.name_ = handler['http://schema.org/name'];
-  this.url_ = handler['http://schema.org/url']['@id'];
-
-  var handlerClass = actions.actionHandlerTypes[handler['@type']];
-  this.handler_ = new handlerClass(this.url_);
+  if (!name) {
+    throw new actions.ActionWidget.Exception('Missing action name');
+  }
+  if (!handler) {
+    throw new actions.ActionWidget.Exception('Missing action handler');
+  }
+  this.name_ = name;
+  this.handler_ = handler;
 };
+
+
+actions.ActionWidget.Exception = function(message) {
+   this.message = message;
+   this.name = 'ActionWidgetException';
+}
 
 
 actions.ActionWidget.prototype.render = function(widgetParent, logParent) {
@@ -212,6 +228,51 @@ actions.QuoteActionWidget.prototype.launch = function() {
 };
 
 
+// SearchAction widget **********************************************************
+
+actions.SearchActionWidget = function(operation) {
+
+  //TODO(ewag): Factor out.
+
+  var handler = operation['http://schema.org/actionHandler'];
+  if (!handler) {
+    throw new actions.ActionWidget.Exception('Missing action handler');
+  }
+  var name = handler['http://schema.org/name'] || 'Search';
+  if (!(handler['http://schema.org/url'] &&
+        handler['http://schema.org/url']['@id'])) {
+    throw new actions.ActionWidget.Exception('Missing handler url')
+  }
+  var url = handler['http://schema.org/url']['@id'];
+
+  var handlerClass = actions.actionHandlerTypes[handler['@type']];
+  if (!handlerClass) {
+    throw new actions.ActionWidget.Exception(
+      'Unknown handler type: ' + handler['@type']);
+  }
+  var actionHandler = new handlerClass(url);
+
+  actions.ActionWidget.call(this, name, actionHandler);
+};
+actions.SearchActionWidget.prototype = Object.create(
+    actions.ActionWidget.prototype);
+
+
+actions.SearchActionWidget.prototype.launch = function() {
+  var el = $('<div class="result"></div>');
+  this.log_.append(el);
+
+  console.log(this.handler_)
+
+  var callback = function(success, content) {
+    this.updateWidgetState(success);
+    console.log(JSON.parse(content));
+  }
+
+  this.handler_.trigger({'test': 'someval'}, el, $.proxy(callback, this));
+};
+
+
 // Action Handlers *************************************************************
 
 actions.ActionHandler = function(url) {
@@ -246,8 +307,8 @@ actions.HttpHandler.prototype.trigger = function(params, resultBox, callback) {
     }),
     contentType: 'application/json; charset=utf-8',
     complete: $.proxy(function(e) {
-      var success = this.callback(resultBox, e);
-      callback(success);
+      var successAndResponse = this.callback(resultBox, e);
+      callback(successAndResponse[0], successAndResponse[1]);
     }, this)
   }
   // What is the name of the param?
@@ -260,7 +321,7 @@ actions.HttpHandler.prototype.callback = function(el, e) {
   var success = false;
   if (e.status !== 200) {
     el.append($('<p><span class="text-danger">Server error</span></p> '));
-    return success;
+    return [success, null];
   }
   var response = JSON.parse(e.responseText)
   if (response.errors && response.errors.length) {
@@ -283,7 +344,8 @@ actions.HttpHandler.prototype.callback = function(el, e) {
         '</span></p>' +
         '<p class="debug">Debug: ' + response.result.debug+ '</p>'));
   }
-  return success;
+  var content = response.result ? response.result.content : null;
+  return [success, content];
 }
 
 
@@ -310,7 +372,8 @@ actions.WebPageHandler.prototype.trigger = function(
 
 actions.actionTypeToWidgetMap = {
   'http://schema.org/ReviewAction': actions.ReviewActionWidget,
-  'http://schema.org/QuoteAction': actions.QuoteActionWidget
+  'http://schema.org/QuoteAction': actions.QuoteActionWidget,
+  'http://schema.org/SearchAction': actions.SearchActionWidget
 };
 
 

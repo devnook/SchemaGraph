@@ -32,7 +32,7 @@
             <button id="parse" class="btn btn-primary">Parse</button>
           </div>
           <div class="tab-pane" id="url-input-tab">
-            <textarea rows="4" id="provider-url" placeholder="Resource page url">http://googleknowledge.github.io/ActionsSamples/restaurant.html</textarea>
+            <textarea rows="4" id="provider-url" placeholder="Resource page url">http://localhost:8080/example/places.html</textarea>
             <button id="fetch" class="btn btn-primary">Crawl</button>
           </div>
           <div class="tab-pane" id="feed-input-tab">
@@ -56,12 +56,17 @@
         </div>
         <div id="raw-results">
           <a class="collapsed" data-toggle="collapse" data-target="#raw">
-            Recognized entity graph
+            Raw entities
           </a>
           <div id="raw" class="collapse">
-            <pre id="log" class="prettyprint lang-html linenums"></pre>
+            <pre id="entities-log" class="prettyprint lang-html linenums"></pre>
+          </div><br>
+          <a class="collapsed" data-toggle="collapse" data-target="#graph-raw">
+            Recognized entity graph
+          </a>
+          <div id="graph-raw" class="collapse">
+            <pre id="graph-log" class="prettyprint lang-html linenums"></pre>
             <button id="graph-render" class="btn btn-primary" data-toggle="modal" data-target="#graph-modal">Visualize</button>
-
           </div>
         </div>
       </div>

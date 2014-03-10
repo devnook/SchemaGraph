@@ -15,6 +15,9 @@ VALIDATION_QUERIES = map(prepare_query, [
 
 
 def validate(g):
+
+
+
   errors = set()
   for q in VALIDATION_QUERIES:
     if len(g.query(q[0])) < 1:

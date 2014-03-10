@@ -18,6 +18,12 @@ handlers:
 - url: /js
   static_dir: js
 
+- url: /static
+  static_dir: static
+
+- url: /example
+  static_dir: examples
+
 - url: /less/css
   static_dir: less/css
 

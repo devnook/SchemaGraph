@@ -116,6 +116,7 @@ class ActionProxyHandler(webapp2.RequestHandler):
 
 
       result = None
+
       try:
         if method == 'GET':
           result = urllib2.urlopen(('%s?%s' % (data['url'], urllib.urlencode(data['params']))))
@@ -139,7 +140,8 @@ class ActionProxyHandler(webapp2.RequestHandler):
           'url': url_parts[0],
           'params': url_parts[1],
           'code': '%s %s' % (str(result.getcode()), result.msg),
-          'debug': debug
+          'debug': debug,
+          'content': result.read(),
         }
 
       print response
