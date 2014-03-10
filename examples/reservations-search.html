@@ -1,0 +1,42 @@
+  {
+  "@context": "http://localhost:8080/static/context.jsonld",
+  "@type": "ItemList",
+  "itemListElement": [{
+      "@type": "FoodEstablishmentReservation",
+      "@id": "https://service.com/restaurants/123/reservations/9827995791",
+      "startTime": "6:00pm",
+      "partySize": "2",
+      "reservationStatus": "ResevationAvailable",
+      "reservationFor": {
+        "@type": "Restaurant",
+        "@id": "https://service.com/restaurants/123"
+      },
+      "operation": [{
+        "@type": "ReserveAction",
+        "actionStatus": "proposed",
+        "actionHandler": [{
+        "@type": "HttpHandler",
+          "httpMethod": "post"
+        }]
+      }]
+    },
+    {
+      "@type": "FoodEstablishmentReservation",
+      "@id": "https://service.com/restaurants/123/reservations/0901743307",
+      "startTime": "7:00pm",
+      "partySize": "2",
+      "reservationStatus": "ResevationAvailable",
+      "reservationFor": {
+        "@type": "Restaurant",
+        "@id": "https://service.com/restaurants/123"
+      },
+      "operation": {
+        "@type": "ReserveAction",
+        "actionStatus": "proposed",
+        "actionHandler": [{
+        "@type": "HttpHandler",
+          "httpMethod": "post"
+        }]
+      }
+    }]
+}

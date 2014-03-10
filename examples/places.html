@@ -1,0 +1,39 @@
+<script type="application/ld+json">
+  {
+  "@context": "http://localhost:8080/static/context.jsonld",
+  "@type": "Restaurant",
+  "name": "Sam's Pizza Place",
+  "reservations": {
+    "@type": "ItemList",
+    "@id": "https://service.com/restaurants/123/reservations",
+    "operation": {
+      "@type": "SearchAction",
+      "actionStatus": "proposed",
+      "actionHandler": [{
+        "@type": "HttpHandler",
+        "url": "http://localhost:8080/example/reservations-search.html",
+        "httpMethod": "get"
+      }],
+      "expects": [{
+        "@type": "SupportedClass",
+        "subClassOf": "FoodEstablishmentReservation",
+        "supportedProperty": [{
+          "@type": "SupportedProperty",
+          "name": "startTime",
+          "occurs": "Exactly-One",
+          "rangeIncludes": "DateTime"
+        },
+        {
+          "@type": "SupportedProperty",
+          "name": "partySize",
+          "occurs": "Exactly-One",
+          "rangeIncludes": "number"
+        }]
+      }]
+    }
+  },
+  "openingHoursSpecification": {
+    "opens": "15:00:00Z+03:00"
+  }
+}
+</script>
