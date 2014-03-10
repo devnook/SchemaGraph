@@ -1,0 +1,8 @@
+{
+  "@context": "http://localhost:8080/static/context.jsonld",
+  "@type": "FoodEstablishmentReservation",
+  "@id": "https://service.com/restaurants/123/reservations/9827995791",
+  "startTime": "6:00pm",
+  "partySize": "2",
+  "reservationStatus": "ReservationConfirmed"
+}

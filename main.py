@@ -72,6 +72,7 @@ class SampleHandler(webapp2.RequestHandler):
       self.error(404)
       self.response.out.write('failure')
 
+from urllib2 import urlopen
 
 class FetchHandler(webapp2.RequestHandler):
     def get(self):
@@ -84,11 +85,12 @@ class FetchHandler(webapp2.RequestHandler):
       #if not rp.can_fetch('Googlebot', url):
       #  response['errors'].append('Content not crawlable. Check robots.txt file for crawl permission.')
 
+      document = urlopen(url)
 
       (response['graph'],
        response['entities'],
        response['warnings'],
-       response['errors']) = rdf_parser.parse_document(url)
+       response['errors']) = rdf_parser.parse_document(document)
 
       self.response.out.write(json.dumps(response))
 
@@ -120,6 +122,7 @@ class ActionProxyHandler(webapp2.RequestHandler):
       try:
         if method == 'GET':
           result = urllib2.urlopen(('%s?%s' % (data['url'], urllib.urlencode(data['params']))))
+
         else:
           result = urllib2.urlopen(data['url'], urllib.urlencode(data['params']))
 
@@ -141,8 +144,12 @@ class ActionProxyHandler(webapp2.RequestHandler):
           'params': url_parts[1],
           'code': '%s %s' % (str(result.getcode()), result.msg),
           'debug': debug,
-          'content': result.read(),
         }
+        if result.getcode() == 200:
+          (response['graph'],
+           response['entities'],
+           response['warnings'],
+           response['errors']) = rdf_parser.parse_document(result)
 
       print response
       self.response.out.write(json.dumps(response))

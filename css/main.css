@@ -103,20 +103,30 @@ textarea {
 padding: 0 10px;
 }
 
-.result {
+.log {
 border-top: 5px solid #eee;
 padding: 10px 10px 0 10px;
+background-color: #fff;
+}
+
+.log:empty {
+  background-color: #eee;
 }
 
 .action-link {
   margin: 0 10px 10px 0;
 }
 
-.debug {
+.debug,
+.sending {
   color: #666;
   padding: 0 0 10px 0;
 margin: 0;
 font-style: italic;
+}
+
+.debug {
+  font-size: 80%;
 }
 
 .node {

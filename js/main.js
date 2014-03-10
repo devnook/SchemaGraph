@@ -46,7 +46,7 @@ var actions = actions || {};
 
 actions.PROXY_URL = location.origin + '/proxy';
 
-actions.snippetTpl = '<div class="entity">' +
+actions.snippetTpl = '<div class="entity" data-id="{{id}}">' +
   '<p><a href="{{id}}">{{name}}</a></p>' +
   '<p>This is an example search result </p>' +
   '<div class="action-widget"></div>' +
@@ -71,20 +71,28 @@ actions.processResponse = function(response) {
 actions.displayEntities = function(entities) {
   var el = $('#entities');
   $('#entities-section').show();
+  $('#api-calls-section').show();
   $.each(entities, function(id, entity) {
     actions.renderSnippet(el, entity);
   })
 };
-
+i = 0
 
 actions.renderSnippet = function(el, entity) {
   var view = {
     name: entity['http://schema.org/name'],
     id: entity['@id']
   };
-  //console.log(entity)
-  var output = Mustache.render(actions.snippetTpl, view);
-  el.append($(output))
+  console.log(entity)
+
+
+  var entityEl = $('.entity[data-id="' + entity['@id'] + '"]');
+  if (!entityEl.length) {
+    var output = Mustache.render(actions.snippetTpl, view);
+    entityEl = $(output);
+    el.append(entityEl);
+  }
+
 
 
   $.each(actions.supportedOperationProperties, function(i, property) {
@@ -98,24 +106,25 @@ actions.renderSnippet = function(el, entity) {
         operations = [operations]
     }
 
-    console.log(operations)
-
     $.each(operations, function(j, operation) {
       //console.log('operation')
-      //console.log(operation)
+      console.log(entity)
+      console.log(operations)
       var actionWidgetClass = actions.actionTypeToWidgetMap[operation['@type']];
       if (actionWidgetClass) {
         try {
           var widget = new actionWidgetClass(operation);
-          widget.render($('.action-widget'), $('.action-log'));
+          widget.render(entityEl.find('.action-widget'), $('#api-calls'));
         } catch (e) {
 
           var  msg = (e instanceof actions.ActionWidget.Exception) ?
               e.message : 'Application error';
+
           if ($('#validation-errors').text()) {
             $('#validation-errors').append($('<br>'));
           }
           $('#validation-errors').append(msg);
+          throw e;
         }
       } else {
         if ($('#validation-errors').text()) {
@@ -126,6 +135,7 @@ actions.renderSnippet = function(el, entity) {
 
     });
   })
+
 }
 
 
@@ -152,12 +162,13 @@ actions.ActionWidget.Exception = function(message) {
 }
 
 
-actions.ActionWidget.prototype.render = function(widgetParent, logParent) {
-  this.button_ = $(
+actions.ActionWidget.prototype.render = function(widgetParent, logEl) {
+  this.el_ = this.el_ || $('<div></div>');
+  this.button_ = this.button_ || $(
       '<button class="action-link btn">' + this.name_ + '</button>');
-  this.log_ = $('<div class="log"></div>');
-  widgetParent.append(this.button_);
-  logParent.append(this.log_);
+  this.log_ = logEl || $('<div class="log"></div>');
+  this.el_.append(this.button_);
+  widgetParent.append(this.el_);
   this.button_.on('click', $.proxy(this.launch, this));
 };
 
@@ -178,7 +189,12 @@ actions.ActionWidget.prototype.updateWidgetState = function(success) {
 // ReviewAction widget *********************************************************
 
 actions.ReviewActionWidget = function(operation) {
-  actions.ActionWidget.call(this, operation);
+
+  var handler = operation['http://schema.org/actionHandler'];
+  var name = handler['http://schema.org/name'] || 'Review';
+  var actionHandler = actions.createActionHandler(handler);
+
+  actions.ActionWidget.call(this, name, actionHandler);
 };
 actions.ReviewActionWidget.prototype = Object.create(
     actions.ActionWidget.prototype);
@@ -199,13 +215,11 @@ actions.ReviewActionWidget.prototype.launch = function() {
   }, this));
 
   this.popup_.find('select').change($.proxy(function(e) {
-    var el = $('<div class="result"></div>');
-    this.log_.append(el);
     var callback = $.proxy(function(e) {
       this.updateWidgetState(e)
       this.popup_.remove();
     }, this);
-    this.handler_.trigger({'value': $(e.target).val()}, el, callback);
+    this.handler_.trigger({'value': $(e.target).val()}, this.log_, callback);
     this.popup_.remove();
     return false;
   }, this));
@@ -222,35 +236,31 @@ actions.QuoteActionWidget.prototype = Object.create(
 
 
 actions.QuoteActionWidget.prototype.launch = function() {
-  var el = $('<div class="result"></div>');
-  this.log_.append(el);
-  this.handler_.trigger({}, el, $.proxy(this.updateWidgetState, this));
+  this.handler_.trigger({}, this.log_, $.proxy(this.updateWidgetState, this));
 };
 
 
 // SearchAction widget **********************************************************
 
-actions.SearchActionWidget = function(operation) {
-
-  //TODO(ewag): Factor out.
-
-  var handler = operation['http://schema.org/actionHandler'];
+actions.createActionHandler = function(handler) {
   if (!handler) {
     throw new actions.ActionWidget.Exception('Missing action handler');
   }
-  var name = handler['http://schema.org/name'] || 'Search';
-  if (!(handler['http://schema.org/url'] &&
-        handler['http://schema.org/url']['@id'])) {
-    throw new actions.ActionWidget.Exception('Missing handler url')
-  }
   var url = handler['http://schema.org/url']['@id'];
-
   var handlerClass = actions.actionHandlerTypes[handler['@type']];
   if (!handlerClass) {
     throw new actions.ActionWidget.Exception(
       'Unknown handler type: ' + handler['@type']);
   }
-  var actionHandler = new handlerClass(url);
+  return new handlerClass(url);
+}
+
+
+actions.SearchActionWidget = function(operation) {
+
+  var handler = operation['http://schema.org/actionHandler'];
+  var name = handler['http://schema.org/name'] || 'Search';
+  var actionHandler = actions.createActionHandler(handler);
 
   actions.ActionWidget.call(this, name, actionHandler);
 };
@@ -259,17 +269,123 @@ actions.SearchActionWidget.prototype = Object.create(
 
 
 actions.SearchActionWidget.prototype.launch = function() {
-  var el = $('<div class="result"></div>');
-  this.log_.append(el);
-
-  console.log(this.handler_)
-
-  var callback = function(success, content) {
+  var callback = function(success, response) {
     this.updateWidgetState(success);
-    console.log(JSON.parse(content));
+
+    var el = $('#entities');
+    for (var i = 0, entity; entity = response.entities[i]; i++) {
+      actions.renderSnippet(el, entity);
+    }
+
+    //TODO(ewag): Check for expectations.
+    /*
+    for (var i = 0, entity; entity = response.entities[i]; i++) {
+      if (entity['@type'] == 'http://schema.org/FoodEstablishmentReservation') {
+        var actionWidgetClass = actions.actionTypeToWidgetMap[entity['http://schema.org/operation']['@type']];
+        if (actionWidgetClass) {
+          console.log(entity)
+          //TODO(ewag): Factor out.
+          var el = $('<div><p>Reservation for ' + entity['http://schema.org/partySize'] + ' at ' + entity['http://schema.org/startTime']['@value'] + '</p></div>')
+          this.el_.parent().append(el);
+          var widget = new actionWidgetClass(entity['http://schema.org/operation']);
+          widget.render(el, this.log_);
+        }
+      }
+    }*/
   }
 
-  this.handler_.trigger({'test': 'someval'}, el, $.proxy(callback, this));
+  this.handler_.trigger({'test': 'someval'}, this.log_, $.proxy(callback, this));
+};
+
+
+actions.ReserveActionWidget = function(operation) {
+
+
+  var handler = operation['http://schema.org/actionHandler'];
+  var name = handler['http://schema.org/name'] || 'Reserve';
+  var actionHandler = actions.createActionHandler(handler);
+
+  actions.ActionWidget.call(this, name, actionHandler);
+};
+actions.ReserveActionWidget.prototype = Object.create(
+    actions.ActionWidget.prototype);
+
+
+
+
+
+actions.ReserveActionWidget.prototype.launch = function() {
+  var callback = function(success, response) {
+    this.updateWidgetState(success);
+    console.log(response)
+
+    var el = $('#entities');
+    for (var i = 0, entity; entity = response.entities[i]; i++) {
+      actions.renderSnippet(el, entity);
+    }
+
+
+    //TODO(ewag): Check for expectations.
+
+    for (var i = 0, entity; entity = response.entities[i]; i++) {
+      if (entity['@type'] == 'http://schema.org/FoodEstablishmentReservation') {
+        var status = entity['http://schema.org/reservationStatus'] ;
+        if (status == 'ResevationAvailable') {
+          this.button_.text('Reservation available')
+          var actionWidgetClass = actions.actionTypeToWidgetMap[entity['http://schema.org/operation']['@type']];
+          if (actionWidgetClass) {
+            var widget = new actionWidgetClass(entity['http://schema.org/operation']);
+            widget.render(this.el_, this.log_);
+          }
+        } else if (status == 'ResevationHeld') {
+          this.button_.text('Reservation held temporarily, please confrim')
+
+          var actionWidgetClass = actions.actionTypeToWidgetMap[entity['http://schema.org/operation']['@type']];
+          if (actionWidgetClass) {
+            var widget = new actionWidgetClass(entity['http://schema.org/operation']);
+            widget.render(this.el_.parent(), this.log_);
+          } else {
+            // raise error
+            throw new actions.ActionWidget.Exception('Unknown action type');
+          }
+        }
+      }
+    }
+  }
+  this.handler_.trigger({'test': 'someval'}, this.log_, $.proxy(callback, this));
+};
+
+
+
+actions.ConfirmActionWidget = function(operation) {
+
+  console.log(operation)
+
+  var handler = operation['http://schema.org/actionHandler'];
+  var name = handler['http://schema.org/name'] || 'Reserve';
+  var actionHandler = actions.createActionHandler(handler);
+
+  actions.ActionWidget.call(this, name, actionHandler);
+};
+actions.ConfirmActionWidget.prototype = Object.create(
+    actions.ActionWidget.prototype);
+
+
+
+
+
+actions.ConfirmActionWidget.prototype.launch = function() {
+  var callback = function(success, response) {
+    this.updateWidgetState(success);
+    if (response.entities[0]['http://schema.org/reservationStatus'] == 'ReservationConfirmed') {
+      this.button_.text('Confirmed')
+    }
+
+
+
+
+  }
+  this.handler_.trigger({'test': 'someval'}, this.log_, $.proxy(callback, this));
 };
 
 
@@ -297,8 +413,9 @@ actions.HttpHandler.prototype = Object.create(actions.ActionHandler.prototype);
 
 
 actions.HttpHandler.prototype.trigger = function(params, resultBox, callback) {
+  var result = $('<div class="log"><p class="sending">Sending request to ' + this.url_ + ' ...</p></div>');
   resultBox.append(
-      $('<p class="debug">Sending request to ' + this.url_ + ' ...</p> '));
+      result);
   var config = {
     type: 'POST',
     data: JSON.stringify({
@@ -307,7 +424,7 @@ actions.HttpHandler.prototype.trigger = function(params, resultBox, callback) {
     }),
     contentType: 'application/json; charset=utf-8',
     complete: $.proxy(function(e) {
-      var successAndResponse = this.callback(resultBox, e);
+      var successAndResponse = this.callback(result, e);
       callback(successAndResponse[0], successAndResponse[1]);
     }, this)
   }
@@ -345,7 +462,7 @@ actions.HttpHandler.prototype.callback = function(el, e) {
         '<p class="debug">Debug: ' + response.result.debug+ '</p>'));
   }
   var content = response.result ? response.result.content : null;
-  return [success, content];
+  return [success, response];
 }
 
 
@@ -373,7 +490,9 @@ actions.WebPageHandler.prototype.trigger = function(
 actions.actionTypeToWidgetMap = {
   'http://schema.org/ReviewAction': actions.ReviewActionWidget,
   'http://schema.org/QuoteAction': actions.QuoteActionWidget,
-  'http://schema.org/SearchAction': actions.SearchActionWidget
+  'http://schema.org/SearchAction': actions.SearchActionWidget,
+  'http://schema.org/ReserveAction': actions.ReserveActionWidget,
+  'http://schema.org/ConfirmAction': actions.ConfirmActionWidget
 };
 
 

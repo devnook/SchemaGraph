@@ -1,0 +1,32 @@
+{
+  "@context": "http://localhost:8080/static/context.jsonld",
+  "@type": "FoodEstablishmentReservation",
+  "@id": "https://service.com/restaurants/123/reservations/9827995791",
+  "startTime": "6:00pm",
+  "partySize": "2",
+  "reservationStatus": "ResevationHeld",
+  "reservationFor": {
+    "@type": "Restaurant",
+    "@id": "https://code.sgo.to/restaurants/123"
+  },
+  "operation": [{
+    "@type": "ConfirmAction",
+    "actionStatus": "proposed",
+    "actionHandler": [{
+      "@type": "HttpHandler",
+      "name": "Confirm this restaurant reservation",
+      "httpMethod": "post",
+      "http://schema.org/url": "http://localhost:8080/example/json/reservations-confirm.json"
+    }],
+    "expects": [{
+      "@type": "SupportedClass",
+      "subClassOf": "FoodEstablishmentReservation",
+      "supportedProperty": [{
+        "@type": "SupportedProperty",
+        "name": "undername",
+        "occurs": "Exactly-One",
+        "rangeIncludes": "Person"
+      }]
+    }]
+  }]
+}

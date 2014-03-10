@@ -1,6 +1,7 @@
 <script type="application/ld+json">
   {
   "@context": "http://localhost:8080/static/context.jsonld",
+  "@id": "https://service.com/restaurants/123",
   "@type": "Restaurant",
   "name": "Sam's Pizza Place",
   "reservations": {
@@ -11,7 +12,7 @@
       "actionStatus": "proposed",
       "actionHandler": [{
         "@type": "HttpHandler",
-        "url": "http://localhost:8080/example/reservations-search.html",
+        "url": "http://localhost:8080/example/json/reservations-search.json",
         "httpMethod": "get"
       }],
       "expects": [{

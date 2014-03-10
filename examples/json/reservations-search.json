@@ -17,7 +17,7 @@
         "actionHandler": [{
           "@type": "HttpHandler",
           "httpMethod": "post",
-          "http://schema.org/url": "http://localhost:8080/example/json/reservations-hold.html"
+          "http://schema.org/url": "http://localhost:8080/example/json/reservations-hold.json"
         }]
       }]
     },
@@ -37,7 +37,7 @@
         "actionHandler": [{
           "@type": "HttpHandler",
           "httpMethod": "post",
-          "http://schema.org/url": "http://localhost:8080/example/json/reserve"
+          "http://schema.org/url": "http://localhost:8080/example/json/reservations-hold.json"
         }]
       }
     }]

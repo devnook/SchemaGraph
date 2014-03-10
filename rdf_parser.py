@@ -34,9 +34,7 @@ context = {
   }
 }
 
-def parse_document(url):
-  document = urlopen(url)
-  logging.info(url)
+def parse_document(document):
 
   with closing(document) as f:
     g = rdflib.Graph()
@@ -44,13 +42,16 @@ def parse_document(url):
     # TODO(ewag): Rethink whole issue of custom context resolution.
 
     if document.headers.typeheader.split(';')[0] == 'application/json':
-      g, parse_errors = process_jsonld(g, f.read(), context, url)
+      g, parse_errors = process_jsonld(g, f.read(), context, document.url)
     else:
       doc = html5lib.parse(f, treebuilder="dom",
                            encoding=f.info().getparam("charset"))
-      g, parse_errors = process_dom(g, doc, context, url)
+      g, parse_errors = process_dom(g, doc, context, document.url)
 
-    graph, entities, warnings, errors = process_graph(g, url)
+    for s,p,o in g:
+      print s,p,o
+
+    graph, entities, warnings, errors = process_graph(g, document.url)
     errors.update(parse_errors)
     return graph, entities, warnings, list(errors)
 
@@ -104,7 +105,8 @@ def process_jsonld(g, json_str, context, location):
 
 SUPPORTED_TYPES = [
   'http://schema.org/Restaurant',
-  'http://schema.org/Movie'
+  'http://schema.org/Movie',
+  'http://schema.org/FoodEstablishmentReservation',
 ]
 
 def main():
@@ -177,7 +179,8 @@ if __name__ == '__main__':
 
 
 def process_graph(g, url=None):
-  errors = validator.validate(g)
+  #errors = validator.validate(g)
+  errors = set()
   warnings = []
   entities = []
 
