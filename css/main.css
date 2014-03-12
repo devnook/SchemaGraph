@@ -91,11 +91,13 @@ textarea {
   margin: 10px 0;
 }
 
-.entity > p {
+.entity > p,
+.entity-content > p {
   margin: 10px;
 }
 
-.entity > p:first-child {
+.entity > p:first-child,
+.entity-content > p:first-child {
   padding-top: 10px;
 }
 

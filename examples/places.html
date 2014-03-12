@@ -33,6 +33,15 @@
       }]
     }
   },
+  "operation": {
+    "@type": "OtherSearchAction",
+    "actionStatus": "proposed",
+    "actionHandler": [{
+      "@type": "HttpHandler",
+      "url": "http://localhost:8080/example/json/reservations-search.json",
+      "httpMethod": "get"
+    }]
+  },
   "openingHoursSpecification": {
     "opens": "15:00:00Z+03:00"
   }

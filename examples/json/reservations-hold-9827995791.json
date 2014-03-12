@@ -7,7 +7,7 @@
   "reservationStatus": "ResevationHeld",
   "reservationFor": {
     "@type": "Restaurant",
-    "@id": "https://code.sgo.to/restaurants/123"
+    "@id": "https://service.com/restaurants/123"
   },
   "operation": [{
     "@type": "ConfirmAction",
@@ -16,7 +16,7 @@
       "@type": "HttpHandler",
       "name": "Confirm this restaurant reservation",
       "httpMethod": "post",
-      "http://schema.org/url": "http://localhost:8080/example/json/reservations-confirm.json"
+      "http://schema.org/url": "http://localhost:8080/example/json/reservations-confirm-9827995791.json"
     }],
     "expects": [{
       "@type": "SupportedClass",
