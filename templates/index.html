@@ -22,68 +22,37 @@
         <ul class="nav nav-pills">
           <li class="active"><a href="#html-input-tab" data-toggle="tab">HTML</a></li>
           <li><a href="#url-input-tab" data-toggle="tab">URL</a></li>
-          <li><a href="#feed-input-tab" data-toggle="tab">Merchant Feed</a></li>
         </ul>
 
         <!-- Tab panes -->
         <div class="tab-content">
           <div class="tab-pane active" id="html-input-tab">
             <textarea rows="4" id="code" placeholder="Paste html here"></textarea>
-            <button id="parse" class="btn btn-primary">Parse</button>
+            <button id="parse" class="btn btn-primary" data-toggle="modal" data-target="#graph-modal">Parse</button>
           </div>
           <div class="tab-pane" id="url-input-tab">
-            <textarea rows="4" id="provider-url" placeholder="Resource page url">http://localhost:8080/example/places.html</textarea>
+            <textarea rows="4" id="provider-url" placeholder="Resource page url">http://www.imdb.com/title/tt0864835/?ref_=hm_cht_t2</textarea>
             <button id="fetch" class="btn btn-primary">Crawl</button>
-          </div>
-          <div class="tab-pane" id="feed-input-tab">
-            <textarea rows="4" id="feed-content" placeholder="RSS feed content"></textarea>
-            <button id="parse-feed" class="btn btn-primary">Parse</button>
           </div>
         </div>
       </div>
     </div>
 
     <div class="row">
-      <div class="col-md-4">
-        <p class="alert alert-danger" id="validation-errors"></p>
-        <div id="entities-section" style="display: none;">
-          <a class="" data-toggle="collapse" data-target="#entities-list">
-            Recognized actions
-          </a>
-          <div id="entities-list" class="in">
-            <div id="entities"></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-8">
-        <div id="api-calls-section" style="display: none;">
-          <a class="" data-toggle="collapse" data-target="#api-calls-list">
-            Third-party API calls
-          </a>
-          <div id="api-calls-list" class="in">
-            <div id="api-calls"></div>
-          </div>
-        </div>
-
-
+      <div class="col-md-12">
+        <p class="alert alert-danger" id="errors"></p>
       </div>
     </div>
     <div class="row">
       <div class="col-md-12">
         <div id="raw-results">
-          <a class="collapsed" data-toggle="collapse" data-target="#raw">
-            Raw entities
-          </a>
-          <div id="raw" class="collapse">
-            <pre id="entities-log" class="prettyprint lang-html linenums"></pre>
-          </div><br>
           <a class="collapsed" data-toggle="collapse" data-target="#graph-raw">
-            Recognized entity graph
+            Recognized graph
           </a>
           <div id="graph-raw" class="collapse">
             <pre id="graph-log" class="prettyprint lang-html linenums"></pre>
-            <button id="graph-render" class="btn btn-primary" data-toggle="modal" data-target="#graph-modal">Visualize</button>
           </div>
+          <div id="graph"><div>
         </div>
       </div>
     </div>

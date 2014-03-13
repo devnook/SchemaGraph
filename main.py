@@ -88,8 +88,6 @@ class FetchHandler(webapp2.RequestHandler):
       document = urlopen(url)
 
       (response['graph'],
-       response['entities'],
-       response['warnings'],
        response['errors']) = rdf_parser.parse_document(document)
 
       self.response.out.write(json.dumps(response))
@@ -98,8 +96,6 @@ class ParseHandler(webapp2.RequestHandler):
     def post(self):
       response = {}
       (response['graph'],
-       response['entities'],
-       response['warnings'],
        response['errors']) = rdf_parser.parse_string(self.request.body)
       self.response.out.write(json.dumps(response))
 

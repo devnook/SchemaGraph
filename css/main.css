@@ -165,3 +165,48 @@ circle+text {
   -webkit-transition: background-color 2s, border-color 2s, color: 2s;
   transition: background-color 2s, border-color 2s, color: 2s;
 }
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+
+line+text:hover,
+line:hover+text,
+circle+text:hover,
+circle:hover+text {
+  opacity: 1.0;
+  font-weight: bold;
+}
+
+line+text,
+circle+text {
+ opacity: .3;
+}
+
+.glink:hover .link,
+.link:hover {
+  stroke: #000;
+  stroke-opacity: 1.0;
+}
+
+#graph-modal .modal-dialog {
+  width: auto;
+  margin: 30px;
+}
+
+.graph-details {
+  float: left;
+  position: absolute;
+}
+
+.action-link {
+  -webkit-transition: background-color 2s, border-color 2s, color: 2s;
+  transition: background-color 2s, border-color 2s, color: 2s;
+}

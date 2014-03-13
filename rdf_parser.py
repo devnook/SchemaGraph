@@ -38,36 +38,27 @@ def parse_document(document):
 
   with closing(document) as f:
     g = rdflib.Graph()
+    errors = []
     # This is a hack to force rewriting relative url to full urls.
     # TODO(ewag): Rethink whole issue of custom context resolution.
 
     if document.headers.typeheader.split(';')[0] == 'application/json':
-      g, parse_errors = process_jsonld(g, f.read(), context, document.url)
+      g, errors = process_jsonld(g, f.read(), context, document.url)
     else:
-      doc = html5lib.parse(f, treebuilder="dom",
-                           encoding=f.info().getparam("charset"))
-      g, parse_errors = process_dom(g, doc, context, document.url)
+      g.parse(data=f.read(), format='microdata')
 
-    for s,p,o in g:
-      print s,p,o
 
-    graph, entities, warnings, errors = process_graph(g, document.url)
-    errors.update(parse_errors)
-    return graph, entities, warnings, list(errors)
+    graph = json.loads(g.serialize(format='json-ld', indent=4))
+    return graph, list(errors)
+
 
 def parse_string(docString):
   g = rdflib.Graph()
-  doc = html5lib.parse(docString, treebuilder="dom")
-  g, parse_errors = process_dom(g, doc, context, None)
-  graph, entities, warnings, errors = process_graph(g)
-  errors.update(parse_errors)
+  errors = []
+  g.parse(data=docString, format='microdata')
 
-  print 'e'
-  for s, p, o in g:
-    print 'aaa'
-    print s, p, o
-
-  return graph, entities, warnings, list(errors)
+  graph = json.loads(g.serialize(format='json-ld', indent=4))
+  return graph, list(errors)
 
 
 def process_dom(g, doc, context, location):
@@ -177,29 +168,6 @@ import pprint
 if __name__ == '__main__':
    main()
 
-
-def process_graph(g, url=None):
-  #errors = validator.validate(g)
-  errors = set()
-  warnings = []
-  entities = []
-
-  graph = g.serialize(format='json-ld', indent=4)
-  doc = json.loads(graph)
-
-  for supported_type in SUPPORTED_TYPES:
-    frame = {
-      "@type": supported_type
-    }
-    framed = jsonld.frame(doc, frame)
-
-    entities.extend(framed['@graph'])
-
-  pp = pprint.PrettyPrinter(indent=2)
-  #pp.pprint(doc)
-
-
-  return doc, entities, warnings, errors
 
 
 
